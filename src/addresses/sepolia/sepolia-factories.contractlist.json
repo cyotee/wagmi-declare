@@ -1,0 +1,203 @@
+[
+    {
+        "chainId": 11155111,
+        "hookName": "UniswapV2StandardStrategyVaultPkg",
+        "name": "Uniswap V2 Strategy Vault Factory",
+        "functions": [
+            {
+                "deployVault": "Deploy Uniswap V2 Standard Exchange Strategy Vault",
+                "simulate": true,
+                "resultStrategies": [
+                    {
+                        "type": "simulate",
+                        "label": "Expected Vault Address",
+                        "format": "address",
+                        "abiPath": "abis/VaultFactory.json"
+                    },
+                    {
+                        "type": "event",
+                        "label": "New Vault Deployed",
+                        "format": "link",
+                        "hook": {
+                            "name": "useWatchVaultRegistryDeploymentFacetNewVaultEvent",
+                            "argsFrom": []
+                        },
+                        "arg": "vault",
+                        "abiPath": "abis/VaultRegistry.json"
+                    }
+                ],
+                "arguments": [
+                    {
+                        "name": "pool",
+                        "type": "address",
+                        "description": "Address of an existing Uniswap V2 liquidity pool (e.g., from factory's createPair(tokenA, tokenB))",
+                        "ui": {
+                            "widget": "select",
+                            "source": "tokenlist",
+                            "sourcePath": "sepolia-uniV2pool.tokenlist.json",
+                            "valueField": "address",
+                            "labelField": "name",
+                            "filters": {
+                                "chainId": 11155111
+                            },
+                            "allowManual": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "chainId": 11155111,
+        "hookName": "balancerV3ConstantProductPoolStandardVaultPkg",
+        "name": "Balancer V3 Constant Product Pool Factory",
+        "functions": [
+            {
+                "deployVault": "Deploy Balancer V3 Constant Product Pool",
+                "arguments": [
+                    {
+                        "name": "tokenConfigs",
+                        "type": "tuple[]",
+                        "description": "Array of token configurations (struct: token, tokenType, rateProvider, paysYieldFees). Min 2, max 4 for constant product pools.",
+                        "minItems": 2,
+                        "maxItems": 4,
+                        "ui": {
+                            "array": {
+                                "addLabel": "Add Token Config",
+                                "removeLabel": "Remove Config",
+                                "itemLabelField": "token"
+                            }
+                        },
+                        "components": [
+                            {
+                                "name": "token",
+                                "type": "address",
+                                "description": "ERC20 token address",
+                                "ui": {
+                                    "widget": "select",
+                                    "source": "tokenlist",
+                                    "sourcePath": "sepolia-tokens.tokenlist.json",
+                                    "valueField": "address",
+                                    "labelField": "symbol",
+                                    "filters": {
+                                        "chainId": 11155111
+                                    },
+                                    "allowManual": true
+                                }
+                            },
+                            {
+                                "name": "tokenType",
+                                "type": "uint8",
+                                "description": "Token type: 0=STANDARD, 1=WITH_RATE",
+                                "default": 0,
+                                "ui": {
+                                    "widget": "select",
+                                    "source": "static",
+                                    "options": [
+                                        {
+                                            "value": 0,
+                                            "label": "STANDARD"
+                                        },
+                                        {
+                                            "value": 1,
+                                            "label": "WITH_RATE"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "rateProvider",
+                                "type": "address",
+                                "description": "IRateProvider contract address (required if tokenType=1 WITH_RATE; otherwise optional)",
+                                "optional": true,
+                                "ui": {
+                                    "widget": "address",
+                                    "allowManual": true,
+                                    "dependsOn": [
+                                        "tokenType"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "paysYieldFees",
+                                "type": "bool",
+                                "description": "If true, this token accrues yield fees to the pool",
+                                "default": false,
+                                "ui": {
+                                    "widget": "select",
+                                    "source": "static",
+                                    "options": [
+                                        {
+                                            "value": true,
+                                            "label": "Yes (Pays Yield Fees)"
+                                        },
+                                        {
+                                            "value": false,
+                                            "label": "No"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "hooksContract",
+                        "type": "address",
+                        "description": "Optional hooks contract for custom logic (e.g., before/after swaps)",
+                        "optional": true,
+                        "default": "0x0000000000000000000000000000000000000000",
+                        "ui": {
+                            "widget": "address",
+                            "allowManual": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "chainId": 11155111,
+        "hookName": "StandardExchangeSingleVaultSeigniorageDETFDFPkg",
+        "name": "Standard Exchange Single Vault Seigniorage DETF Factory",
+        "functions": [
+            {
+                "deployDetf": "Deploy DETF Vault (Decentralized Exchange-Traded Fund)",
+                "arguments": [
+                    {
+                        "name": "reserveVault",
+                        "type": "address",
+                        "description": "Address of the underlying reserve vault",
+                        "ui": {
+                            "widget": "address",
+                            "allowManual": true
+                        }
+                    },
+                    {
+                        "name": "priceTarget",
+                        "type": "address",
+                        "description": "Token address from the reserve vault's supported tokens (fetched dynamically via vaultTokens())",
+                        "ui": {
+                            "widget": "select",
+                            "source": "contractFunction",
+                            "dependsOn": [
+                                "reserveVault"
+                            ],
+                            "abiCall": {
+                                "abiPath": "app/abi/StandardVault.json",
+                                "function": "vaultTokens",
+                                "argsFrom": [],
+                                "contractFrom": "reserveVault"
+                            },
+                            "valueField": "$",
+                            "labelField": {
+                                "tokenlistPath": "app/addresses/sepolia/sepolia-tokens.tokenlist.json",
+                                "labelField": "symbol"
+                            },
+                            "allowManual": true
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -1,0 +1,636 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://indexedex.app/schemas/sepolia-vault.contractlist.schema.json",
+    "title": "Contract List",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "required": [
+            "chainId",
+            "hookName",
+            "name"
+        ],
+        "properties": {
+            "chainId": {
+                "type": "integer"
+            },
+            "hookName": {
+                "type": "string"
+            },
+            "name": {
+                "type": "string"
+            },
+            "functions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [],
+                    "properties": {
+                        "simulate": {
+                            "type": "boolean"
+                        },
+                        "resultStrategies": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/resultStrategy"
+                            }
+                        },
+                        "arguments": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/argument"
+                            }
+                        }
+                    },
+                    "patternProperties": {
+                        "^[a-zA-Z0-9]+$": {
+                            "type": "string",
+                            "description": "The function name as the key, mapping to its display label. Exactly one such key-value pair per function object."
+                        }
+                    },
+                    "additionalProperties": false,
+                    "minProperties": 1,
+                    "maxProperties": 4,
+                    "description": "Each object contains exactly one function name key (matching the pattern) mapping to a display label string, plus optional simulate, resultStrategies, and arguments."
+                }
+            }
+        }
+    },
+    "$defs": {
+        "argument": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "description"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Solidity type: address, address[], uint8, uint256, uint256[], bool, string, tuple, tuple[]",
+                    "enum": [
+                        "address",
+                        "address[]",
+                        "uint8",
+                        "uint256",
+                        "uint256[]",
+                        "bool",
+                        "string",
+                        "tuple",
+                        "tuple[]"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "optional": {
+                    "type": "boolean"
+                },
+                "default": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Default value matching the type (e.g., string for address, number for uint8, boolean for bool, array for [] types)."
+                },
+                "minItems": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "maxItems": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/argumentComponent"
+                    },
+                    "description": "Required when type is tuple or tuple[]. Avoid deep nesting for simplicity."
+                },
+                "ui": {
+                    "$ref": "#/$defs/ui"
+                }
+            },
+            "if": {
+                "properties": {
+                    "type": {
+                        "enum": [
+                            "tuple",
+                            "tuple[]"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "components"
+                ]
+            },
+            "examples": [
+                {
+                    "name": "account",
+                    "type": "address",
+                    "description": "The account to check balance for",
+                    "ui": {
+                        "widget": "address"
+                    }
+                },
+                {
+                    "name": "amounts",
+                    "type": "uint256[]",
+                    "description": "Array of amounts",
+                    "minItems": 1,
+                    "maxItems": 10
+                }
+            ]
+        },
+        "resultStrategy": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "enum": [
+                        "simulate",
+                        "event",
+                        "read"
+                    ]
+                },
+                "label": {
+                    "type": "string"
+                },
+                "format": {
+                    "enum": [
+                        "address",
+                        "link",
+                        "hex",
+                        "number"
+                    ]
+                },
+                "abiPath": {
+                    "type": "string",
+                    "description": "Path to the ABI file or reference (e.g., 'abis/ERC20.json')."
+                },
+                "inlineAbi": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "inputs": {
+                                "type": "array"
+                            },
+                            "outputs": {
+                                "type": "array"
+                            },
+                            "stateMutability": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "description": "Inline ABI array conforming to standard ABI item structure."
+                },
+                "contractAddress": {
+                    "type": "string"
+                },
+                "hook": {
+                    "type": "object",
+                    "required": [
+                        "name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "argsFrom": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/argSource"
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Event or read function name (required when not using hook)."
+                },
+                "arg": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ]
+                },
+                "function": {
+                    "type": "string"
+                },
+                "argsFrom": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/argSource"
+                    }
+                },
+                "valueField": {
+                    "type": "string"
+                }
+            },
+            "if": {
+                "properties": {
+                    "type": {
+                        "const": "read"
+                    }
+                }
+            },
+            "then": {
+                "anyOf": [
+                    {
+                        "required": [
+                            "name"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "hook"
+                        ]
+                    }
+                ]
+            },
+            "else": {
+                "if": {
+                    "properties": {
+                        "type": {
+                            "const": "event"
+                        }
+                    }
+                },
+                "then": {
+                    "anyOf": [
+                        {
+                            "required": [
+                                "name"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "hook"
+                            ]
+                        }
+                    ]
+                }
+            },
+            "if": {
+                "not": {
+                    "required": [
+                        "hook"
+                    ]
+                }
+            },
+            "then": {
+                "oneOf": [
+                    {
+                        "required": [
+                            "abiPath"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "inlineAbi"
+                        ]
+                    }
+                ]
+            },
+            "examples": [
+                {
+                    "type": "read",
+                    "name": "balanceOf",
+                    "abiPath": "abis/ERC20.json",
+                    "argsFrom": [
+                        {
+                            "literal": "0x123..."
+                        }
+                    ]
+                }
+            ]
+        },
+        "argumentComponent": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "description"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Solidity type (no nested tuple[] recommended here)",
+                    "enum": [
+                        "address",
+                        "uint8",
+                        "uint256",
+                        "bool",
+                        "string"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "optional": {
+                    "type": "boolean"
+                },
+                "default": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "ui": {
+                    "$ref": "#/$defs/ui"
+                }
+            },
+            "examples": [
+                {
+                    "name": "token",
+                    "type": "address",
+                    "description": "Token address in tuple"
+                }
+            ]
+        },
+        "ui": {
+            "type": "object",
+            "properties": {
+                "widget": {
+                    "enum": [
+                        "address",
+                        "text",
+                        "select",
+                        "multiselect",
+                        "checkbox",
+                        "radio",
+                        "slider"
+                    ],
+                    "description": "Added more widget types for extensibility (e.g., slider for uint ranges)."
+                },
+                "allowManual": {
+                    "type": "boolean"
+                },
+                "source": {
+                    "enum": [
+                        "tokenlist",
+                        "contractlist",
+                        "static",
+                        "contractFunction"
+                    ]
+                },
+                "sourcePath": {
+                    "type": "string",
+                    "description": "Path within the source data (e.g., 'tokens' in a tokenlist JSON)."
+                },
+                "valueField": {
+                    "type": "string"
+                },
+                "labelField": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "object",
+                            "required": [
+                                "tokenlistPath",
+                                "labelField"
+                            ],
+                            "properties": {
+                                "tokenlistPath": {
+                                    "type": "string"
+                                },
+                                "labelField": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "value",
+                            "label"
+                        ],
+                        "properties": {
+                            "value": {},
+                            "label": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "dependsOn": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Argument names this UI depends on (e.g., for dynamic loading). Ensure no cycles."
+                },
+                "hook": {
+                    "type": "object",
+                    "required": [
+                        "name"
+                    ],
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "argsFrom": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/argSource"
+                            }
+                        }
+                    }
+                },
+                "abiCall": {
+                    "type": "object",
+                    "required": [
+                        "function"
+                    ],
+                    "properties": {
+                        "abiPath": {
+                            "type": "string"
+                        },
+                        "inlineAbi": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        },
+                        "function": {
+                            "type": "string"
+                        },
+                        "argsFrom": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/argSource"
+                            }
+                        },
+                        "contractFrom": {
+                            "$ref": "#/$defs/argSource"
+                        }
+                    },
+                    "oneOf": [
+                        {
+                            "required": [
+                                "abiPath"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "inlineAbi"
+                            ]
+                        }
+                    ]
+                },
+                "array": {
+                    "type": "object",
+                    "properties": {
+                        "addLabel": {
+                            "type": "string"
+                        },
+                        "removeLabel": {
+                            "type": "string"
+                        },
+                        "itemLabelField": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "validation": {
+                    "type": "object",
+                    "properties": {
+                        "regex": {
+                            "type": "string"
+                        },
+                        "errorMessage": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "if": {
+                "properties": {
+                    "widget": {
+                        "enum": [
+                            "select",
+                            "multiselect"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "anyOf": [
+                    {
+                        "required": [
+                            "source"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "options"
+                        ]
+                    }
+                ]
+            },
+            "examples": [
+                {
+                    "widget": "select",
+                    "source": "tokenlist",
+                    "sourcePath": "tokens",
+                    "valueField": "address",
+                    "labelField": "symbol"
+                }
+            ]
+        },
+        "argSource": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "description": "Name of another argument whose current value will be passed as an argument."
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "literal"
+                    ],
+                    "properties": {
+                        "literal": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "array"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ],
+            "examples": [
+                "account",
+                {
+                    "literal": "0x1234567890123456789012345678901234567890"
+                }
+            ]
+        }
+    }
+}

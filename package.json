@@ -1,9 +1,20 @@
 {
-  "name": "wagmi-declare",
-  "version": "0.0.1",
-  "description": "Declarative UI generator for wagmi",
-  "main": "index.js",
-  "author": "cyotee <not_cyotee@proton.me>",
+  "name": "@daosys/wagmi-declare",
+  "version": "0.1.0",
+  "description": "Lightweight helpers and types to build UIs from contract-list schemas (framework-agnostic)",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p .",
+    "clean": "rm -rf dist"
+  },
+  "author": "indexedex",
   "license": "MIT",
-  "private": false
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
 }
