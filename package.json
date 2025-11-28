@@ -1,0 +1,9 @@
+{
+  "name": "wagmi-declare",
+  "version": "0.0.1",
+  "description": "Declarative UI generator for wagmi",
+  "main": "index.js",
+  "author": "cyotee <not_cyotee@proton.me>",
+  "license": "MIT",
+  "private": false
+}
