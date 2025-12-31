@@ -4,6 +4,17 @@
 
 Build and tests passing. Phases 1-4 implemented.
 
+### Progress Summary
+
+| Phase | Features | Tests | Status |
+|-------|----------|-------|--------|
+| 1 | placeholder, helpText, helpLink | 7 | ✅ Complete |
+| 2 | validation (min/max/step), display units | 10 | ✅ Complete |
+| 3 | visibleWhen, dynamic defaults | 15 | ✅ Complete |
+| 4 | tokenAmount, datetime widgets | 18 | ✅ Complete |
+| 5 | Field groups, computed fields, async validation | - | Pending |
+| 6 | Wizard, preview, gas estimation, etc. | - | Pending |
+
 ---
 
 ## Implementation Order
