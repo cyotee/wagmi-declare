@@ -1,8 +1,8 @@
 # wagmi-declare Development Plan
 
-## Current Status: Phase 4 Complete
+## Current Status: Phase 5 Complete
 
-Build and tests passing. Phases 1-4 implemented.
+Build and tests passing. Phases 1-5 implemented.
 
 ### Progress Summary
 
@@ -12,7 +12,7 @@ Build and tests passing. Phases 1-4 implemented.
 | 2 | validation (min/max/step), display units | 10 | ✅ Complete |
 | 3 | visibleWhen, dynamic defaults | 15 | ✅ Complete |
 | 4 | tokenAmount, datetime widgets | 18 | ✅ Complete |
-| 5 | Field groups, computed fields, async validation | - | Pending |
+| 5 | Field groups, computed fields, async validation | 41 | ✅ Complete |
 | 6 | Wizard, preview, gas estimation, etc. | - | Pending |
 
 ---
@@ -107,37 +107,45 @@ Build and tests passing. Phases 1-4 implemented.
   }
   ```
 
-### Phase 5: Complex Features
+### Phase 5: Complex Features ✅
 *Depend on earlier work*
 
-- [ ] **Field Groups / Sections**
+- [x] **Field Groups / Sections**
   - Organize complex forms into collapsible sections
+  - Helper functions: `isGroupedArguments()`, `flattenArguments()`, `getArgumentGroups()`
   ```json
   "arguments": [
     { "group": "Basic Settings", "fields": [...] },
-    { "group": "Advanced", "collapsed": true, "fields": [...] }
+    { "group": "Advanced", "collapsed": true, "description": "...", "fields": [...] }
   ]
   ```
 
-- [ ] **Read-Only / Computed Fields**
+- [x] **Read-Only / Computed Fields**
   - Display values computed from other fields or contract state
+  - Supports abiCall, expression, and field sources
+  - Optional transforms: formatUnits, parseUnits, toHex, toBigInt
   ```json
   "computed": true,
   "computeFrom": {
-    "abiCall": { "..." }
+    "type": "expression",
+    "expression": "inputAmount * 0.997"
   }
   ```
 
-- [ ] **Async Validation**
+- [x] **Async Validation**
   - Validate against on-chain state
   - Check if address is valid ERC20, if pool exists, etc.
+  - Conditions: exists, notExists, eq, neq, gt, gte, lt, lte, in, notIn
+  - Support for compareToField (dynamic comparison)
+  - Configurable debounceMs
   ```json
   "validation": {
     "onChain": {
       "abiCall": { "function": "balanceOf", "..." },
-      "condition": "gt",
-      "value": 0,
-      "errorMessage": "Token must have balance"
+      "condition": "gte",
+      "compareToField": "amount",
+      "errorMessage": "Insufficient balance",
+      "debounceMs": 500
     }
   }
   ```

@@ -16,6 +16,25 @@ export type DatetimeConfig = {
     defaultOffset?: string;
 };
 
+export type OnChainValidation = {
+    abiCall: ContractListArgUI['abiCall'];
+    condition: 'exists' | 'notExists' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'notIn';
+    value?: any;
+    compareToField?: string;
+    values?: any[];
+    errorMessage?: string;
+    debounceMs?: number;
+};
+
+export type ComputeSource = {
+    type: 'abiCall' | 'expression' | 'field';
+    abiCall?: ContractListArgUI['abiCall'];
+    expression?: string;
+    field?: string;
+    transform?: 'none' | 'formatUnits' | 'parseUnits' | 'toHex' | 'toBigInt';
+    transformDecimals?: number;
+};
+
 export type ContractListArgUI = {
     widget?: 'address' | 'text' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'slider' | 'tokenAmount' | 'datetime';
     tokenAmountConfig?: TokenAmountConfig;
@@ -52,6 +71,7 @@ export type ContractListArgUI = {
         min?: number;
         max?: number;
         step?: number;
+        onChain?: OnChainValidation;
     };
     display?: {
         unit?: 'wei' | 'gwei' | 'ether' | 'bps' | 'percent' | 'seconds' | 'minutes' | 'hours' | 'days';
@@ -80,6 +100,15 @@ export type ContractListArgument = ContractListArgComponent & {
     minItems?: number;
     maxItems?: number;
     components?: ContractListArgComponent[];
+    computed?: boolean;
+    computeFrom?: ComputeSource;
+};
+
+export type ArgumentGroup = {
+    group: string;
+    collapsed?: boolean;
+    description?: string;
+    fields: ContractListArgument[];
 };
 
 export type ResultStrategy =
@@ -110,7 +139,7 @@ export type ResultStrategy =
 export type ContractListFunctionEntry = {
     simulate?: boolean;
     resultStrategies?: ResultStrategy[];
-    arguments?: ContractListArgument[];
+    arguments?: ContractListArgument[] | ArgumentGroup[];
 } & Record<Exclude<string, "simulate" | "resultStrategies" | "arguments">, string>;
 
 export type ContractListFactory = {
@@ -125,6 +154,27 @@ export function getFactories(factories: ContractListFactory[], chainId: number):
     return factories.filter(f => f.chainId === chainId);
 }
 
+// Helper to check if arguments are grouped
+export function isGroupedArguments(args: ContractListArgument[] | ArgumentGroup[] | undefined): args is ArgumentGroup[] {
+    if (!args || args.length === 0) return false;
+    return 'group' in args[0] && 'fields' in args[0];
+}
+
+// Flatten grouped arguments to a single array
+export function flattenArguments(args: ContractListArgument[] | ArgumentGroup[] | undefined): ContractListArgument[] {
+    if (!args) return [];
+    if (!isGroupedArguments(args)) return args;
+    return args.flatMap(group => group.fields);
+}
+
+// Get groups with their fields
+export function getArgumentGroups(args: ContractListArgument[] | ArgumentGroup[] | undefined): ArgumentGroup[] {
+    if (!args || args.length === 0) return [];
+    if (isGroupedArguments(args)) return args;
+    // Wrap flat arguments in a single default group
+    return [{ group: 'Parameters', fields: args }];
+}
+
 export function getFactoryFunctions(factory: ContractListFactory): { functionName: string; label: string; args: ContractListArgument[] }[] {
     return factory.functions.map(fn => {
         const entries = Object.entries(fn).filter(([k]) => !['simulate', 'resultStrategies', 'arguments'].includes(k));
@@ -132,7 +182,7 @@ export function getFactoryFunctions(factory: ContractListFactory): { functionNam
             throw new Error(`Invalid function entry: Expected exactly one function name-label pair, got ${entries.length}`);
         }
         const [functionName, label] = entries[0];
-        const args = fn.arguments ?? [];
+        const args = flattenArguments(fn.arguments);
         return { functionName, label: label as string, args };
     });
 }

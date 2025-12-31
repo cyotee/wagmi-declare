@@ -9,125 +9,195 @@
         "simulate": true,
         "arguments": [
           {
-            "name": "vaultType",
-            "type": "string",
-            "description": "Type of vault to deploy",
-            "ui": {
-              "widget": "select",
-              "source": "static",
-              "options": [
-                { "value": "basic", "label": "Basic Vault" },
-                { "value": "strategy", "label": "Strategy Vault" }
-              ],
-              "helpText": "Basic vaults are simpler, strategy vaults allow custom logic."
-            }
-          },
-          {
-            "name": "pool",
-            "type": "address",
-            "description": "Address of an existing Uniswap V2 liquidity pool",
-            "ui": {
-              "widget": "select",
-              "source": "tokenlist",
-              "sourcePath": "sepolia-uniV2pool.tokenlist.json",
-              "valueField": "address",
-              "labelField": "name",
-              "filters": { "chainId": 11155111 },
-              "allowManual": true,
-              "placeholder": "Select a pool or enter address...",
-              "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for.",
-              "helpLink": "https://docs.indexedex.app/vaults/uniswap-v2"
-            }
-          },
-          {
-            "name": "depositToken",
-            "type": "address",
-            "description": "Token to deposit into the vault",
-            "ui": {
-              "widget": "select",
-              "source": "tokenlist",
-              "sourcePath": "sepolia-tokens.tokenlist.json",
-              "valueField": "address",
-              "labelField": "symbol",
-              "helpText": "Select which token you want to deposit."
-            }
-          },
-          {
-            "name": "depositAmount",
-            "type": "uint256",
-            "description": "Amount of tokens to deposit",
-            "ui": {
-              "widget": "tokenAmount",
-              "tokenAmountConfig": {
-                "tokenFrom": "depositToken",
-                "showMaxButton": true,
-                "showUsdValue": true,
-                "showBalance": true
+            "group": "Vault Configuration",
+            "description": "Configure the type and target of your vault",
+            "fields": [
+              {
+                "name": "vaultType",
+                "type": "string",
+                "description": "Type of vault to deploy",
+                "ui": {
+                  "widget": "select",
+                  "source": "static",
+                  "options": [
+                    { "value": "basic", "label": "Basic Vault" },
+                    { "value": "strategy", "label": "Strategy Vault" }
+                  ],
+                  "helpText": "Basic vaults are simpler, strategy vaults allow custom logic."
+                }
               },
-              "placeholder": "0.0",
-              "helpText": "Enter the amount of tokens to deposit. Click MAX to use your full balance."
-            }
-          },
-          {
-            "name": "deadline",
-            "type": "uint256",
-            "description": "Transaction deadline",
-            "ui": {
-              "widget": "datetime",
-              "datetimeConfig": {
-                "format": "relative",
-                "minDate": "now",
-                "defaultOffset": "+30m"
+              {
+                "name": "pool",
+                "type": "address",
+                "description": "Address of an existing Uniswap V2 liquidity pool",
+                "ui": {
+                  "widget": "select",
+                  "source": "tokenlist",
+                  "sourcePath": "sepolia-uniV2pool.tokenlist.json",
+                  "valueField": "address",
+                  "labelField": "name",
+                  "filters": { "chainId": 11155111 },
+                  "allowManual": true,
+                  "placeholder": "Select a pool or enter address...",
+                  "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for.",
+                  "helpLink": "https://docs.indexedex.app/vaults/uniswap-v2",
+                  "validation": {
+                    "onChain": {
+                      "abiCall": {
+                        "function": "token0",
+                        "inlineAbi": [{"name": "token0", "type": "function", "inputs": [], "outputs": [{"type": "address"}]}],
+                        "contractFrom": "pool"
+                      },
+                      "condition": "exists",
+                      "errorMessage": "Not a valid Uniswap V2 pool address"
+                    }
+                  }
+                }
               },
-              "helpText": "Transaction will revert if not executed before this time."
-            }
-          },
-          {
-            "name": "strategyAddress",
-            "type": "address",
-            "description": "Custom strategy contract address",
-            "ui": {
-              "widget": "address",
-              "placeholder": "0x...",
-              "helpText": "Address of your custom strategy contract.",
-              "visibleWhen": {
-                "field": "vaultType",
-                "condition": "equals",
-                "value": "strategy"
+              {
+                "name": "strategyAddress",
+                "type": "address",
+                "description": "Custom strategy contract address",
+                "ui": {
+                  "widget": "address",
+                  "placeholder": "0x...",
+                  "helpText": "Address of your custom strategy contract.",
+                  "visibleWhen": {
+                    "field": "vaultType",
+                    "condition": "equals",
+                    "value": "strategy"
+                  }
+                }
               }
-            }
+            ]
           },
           {
-            "name": "recipient",
-            "type": "address",
-            "description": "Address to receive vault tokens",
-            "default": { "source": "connectedWallet" },
-            "ui": {
-              "widget": "address",
-              "placeholder": "Defaults to connected wallet",
-              "helpText": "Leave empty to use your connected wallet address."
-            }
-          },
-          {
-            "name": "slippageTolerance",
-            "type": "uint256",
-            "description": "Maximum slippage tolerance for swaps",
-            "ui": {
-              "widget": "slider",
-              "placeholder": "50",
-              "helpText": "Set the maximum allowed slippage for swap operations.",
-              "validation": {
-                "min": 0,
-                "max": 1000,
-                "step": 1,
-                "errorMessage": "Slippage must be between 0 and 1000 basis points (10%)"
+            "group": "Deposit Settings",
+            "description": "Configure your initial deposit",
+            "fields": [
+              {
+                "name": "depositToken",
+                "type": "address",
+                "description": "Token to deposit into the vault",
+                "ui": {
+                  "widget": "select",
+                  "source": "tokenlist",
+                  "sourcePath": "sepolia-tokens.tokenlist.json",
+                  "valueField": "address",
+                  "labelField": "symbol",
+                  "helpText": "Select which token you want to deposit.",
+                  "validation": {
+                    "onChain": {
+                      "abiCall": {
+                        "function": "decimals",
+                        "inlineAbi": [{"name": "decimals", "type": "function", "inputs": [], "outputs": [{"type": "uint8"}]}],
+                        "contractFrom": "depositToken"
+                      },
+                      "condition": "exists",
+                      "errorMessage": "Not a valid ERC20 token"
+                    }
+                  }
+                }
               },
-              "display": {
-                "unit": "bps",
-                "unitLabel": "basis points",
-                "decimals": 0
+              {
+                "name": "depositAmount",
+                "type": "uint256",
+                "description": "Amount of tokens to deposit",
+                "ui": {
+                  "widget": "tokenAmount",
+                  "tokenAmountConfig": {
+                    "tokenFrom": "depositToken",
+                    "showMaxButton": true,
+                    "showUsdValue": true,
+                    "showBalance": true
+                  },
+                  "placeholder": "0.0",
+                  "helpText": "Enter the amount of tokens to deposit. Click MAX to use your full balance.",
+                  "validation": {
+                    "min": 0,
+                    "onChain": {
+                      "abiCall": {
+                        "function": "balanceOf",
+                        "inlineAbi": [{"name": "balanceOf", "type": "function", "inputs": [{"type": "address"}], "outputs": [{"type": "uint256"}]}],
+                        "argsFrom": [{"literal": "connectedWallet"}],
+                        "contractFrom": "depositToken"
+                      },
+                      "condition": "gte",
+                      "compareToField": "depositAmount",
+                      "errorMessage": "Insufficient token balance",
+                      "debounceMs": 500
+                    }
+                  }
+                }
+              },
+              {
+                "name": "estimatedShares",
+                "type": "uint256",
+                "description": "Estimated vault shares to receive",
+                "computed": true,
+                "computeFrom": {
+                  "type": "expression",
+                  "expression": "depositAmount"
+                },
+                "ui": {
+                  "widget": "text",
+                  "helpText": "Estimated number of vault shares you will receive (1:1 for new vaults)."
+                }
               }
-            }
+            ]
+          },
+          {
+            "group": "Advanced Settings",
+            "collapsed": true,
+            "description": "Optional advanced configuration",
+            "fields": [
+              {
+                "name": "recipient",
+                "type": "address",
+                "description": "Address to receive vault tokens",
+                "default": { "source": "connectedWallet" },
+                "ui": {
+                  "widget": "address",
+                  "placeholder": "Defaults to connected wallet",
+                  "helpText": "Leave empty to use your connected wallet address."
+                }
+              },
+              {
+                "name": "slippageTolerance",
+                "type": "uint256",
+                "description": "Maximum slippage tolerance for swaps",
+                "ui": {
+                  "widget": "slider",
+                  "placeholder": "50",
+                  "helpText": "Set the maximum allowed slippage for swap operations.",
+                  "validation": {
+                    "min": 0,
+                    "max": 1000,
+                    "step": 1,
+                    "errorMessage": "Slippage must be between 0 and 1000 basis points (10%)"
+                  },
+                  "display": {
+                    "unit": "bps",
+                    "unitLabel": "basis points",
+                    "decimals": 0
+                  }
+                }
+              },
+              {
+                "name": "deadline",
+                "type": "uint256",
+                "description": "Transaction deadline",
+                "ui": {
+                  "widget": "datetime",
+                  "datetimeConfig": {
+                    "format": "relative",
+                    "minDate": "now",
+                    "defaultOffset": "+30m"
+                  },
+                  "helpText": "Transaction will revert if not executed before this time."
+                }
+              }
+            ]
           }
         ]
       }

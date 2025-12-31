@@ -36,10 +36,22 @@
                             }
                         },
                         "arguments": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/$defs/argument"
-                            }
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/$defs/argument"
+                                    },
+                                    "description": "Flat array of arguments (standard format)."
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/$defs/argumentGroup"
+                                    },
+                                    "description": "Grouped arguments organized into collapsible sections."
+                                }
+                            ]
                         }
                     },
                     "patternProperties": {
@@ -150,6 +162,15 @@
                 },
                 "ui": {
                     "$ref": "#/$defs/ui"
+                },
+                "computed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this field is read-only and computed from other sources."
+                },
+                "computeFrom": {
+                    "$ref": "#/$defs/computeSource",
+                    "description": "Source for computed value (required when computed is true)."
                 }
             },
             "if": {
@@ -182,6 +203,47 @@
                     "description": "Array of amounts",
                     "minItems": 1,
                     "maxItems": 10
+                }
+            ]
+        },
+        "argumentGroup": {
+            "type": "object",
+            "required": ["group", "fields"],
+            "properties": {
+                "group": {
+                    "type": "string",
+                    "description": "Display name for the group/section."
+                },
+                "collapsed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the group should be collapsed by default."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Optional description text for the group."
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/argument"
+                    },
+                    "description": "Arguments within this group."
+                }
+            },
+            "examples": [
+                {
+                    "group": "Basic Settings",
+                    "fields": [
+                        { "name": "token", "type": "address", "description": "Token address" }
+                    ]
+                },
+                {
+                    "group": "Advanced",
+                    "collapsed": true,
+                    "fields": [
+                        { "name": "slippage", "type": "uint256", "description": "Slippage tolerance" }
+                    ]
                 }
             ]
         },
@@ -676,6 +738,10 @@
                         "step": {
                             "type": "number",
                             "description": "Step increment for numeric inputs (e.g., 1 for integers, 0.01 for decimals)."
+                        },
+                        "onChain": {
+                            "$ref": "#/$defs/onChainValidation",
+                            "description": "Async validation against on-chain state."
                         }
                     }
                 },
@@ -731,6 +797,114 @@
                     "sourcePath": "tokens",
                     "valueField": "address",
                     "labelField": "symbol"
+                }
+            ]
+        },
+        "onChainValidation": {
+            "type": "object",
+            "required": ["abiCall", "condition"],
+            "properties": {
+                "abiCall": {
+                    "$ref": "#/$defs/ui/properties/abiCall",
+                    "description": "Contract call to validate against."
+                },
+                "condition": {
+                    "type": "string",
+                    "enum": ["exists", "notExists", "eq", "neq", "gt", "gte", "lt", "lte", "in", "notIn"],
+                    "description": "Condition to evaluate against the result."
+                },
+                "value": {
+                    "description": "Static value to compare against."
+                },
+                "compareToField": {
+                    "type": "string",
+                    "description": "Field name whose value to compare against (alternative to static value)."
+                },
+                "values": {
+                    "type": "array",
+                    "description": "Array of values for in/notIn conditions."
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "description": "Error message to display when validation fails."
+                },
+                "debounceMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5000,
+                    "default": 500,
+                    "description": "Debounce delay in milliseconds before triggering validation."
+                }
+            },
+            "examples": [
+                {
+                    "abiCall": {
+                        "function": "decimals",
+                        "inlineAbi": [{"name": "decimals", "type": "function", "inputs": [], "outputs": [{"type": "uint8"}]}],
+                        "contractFrom": "tokenAddress"
+                    },
+                    "condition": "exists",
+                    "errorMessage": "Not a valid ERC20 token"
+                },
+                {
+                    "abiCall": {
+                        "function": "balanceOf",
+                        "inlineAbi": [{"name": "balanceOf", "type": "function", "inputs": [{"type": "address"}], "outputs": [{"type": "uint256"}]}],
+                        "argsFrom": ["connectedWallet"],
+                        "contractFrom": "tokenAddress"
+                    },
+                    "condition": "gte",
+                    "compareToField": "amount",
+                    "errorMessage": "Insufficient token balance"
+                }
+            ]
+        },
+        "computeSource": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["abiCall", "expression", "field"],
+                    "description": "Source type for computed value."
+                },
+                "abiCall": {
+                    "$ref": "#/$defs/ui/properties/abiCall",
+                    "description": "Contract call to compute the value."
+                },
+                "expression": {
+                    "type": "string",
+                    "description": "Simple expression to compute value (e.g., 'fieldA + fieldB', 'amount * 0.997')."
+                },
+                "field": {
+                    "type": "string",
+                    "description": "Copy value from another field."
+                },
+                "transform": {
+                    "type": "string",
+                    "enum": ["none", "formatUnits", "parseUnits", "toHex", "toBigInt"],
+                    "description": "Optional transformation to apply to the result."
+                },
+                "transformDecimals": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18,
+                    "description": "Decimals for formatUnits/parseUnits transform."
+                }
+            },
+            "required": ["type"],
+            "examples": [
+                {
+                    "type": "abiCall",
+                    "abiCall": {
+                        "function": "getAmountOut",
+                        "inlineAbi": [{"name": "getAmountOut", "type": "function", "inputs": [{"type": "uint256"}], "outputs": [{"type": "uint256"}]}],
+                        "argsFrom": ["amountIn"],
+                        "contractFrom": "router"
+                    }
+                },
+                {
+                    "type": "expression",
+                    "expression": "amountIn * 0.997"
                 }
             ]
         },

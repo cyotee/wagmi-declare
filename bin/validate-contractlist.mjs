@@ -1,7 +1,11 @@
 #!/usr/bin/env node
-const fs = require('fs')
-const path = require('path')
-const { validateContractList } = require('../dist/src/validator')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import pkg from '../dist/src/validator.js'
+const { validateContractList } = pkg
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function usage() {
   console.log('Usage: validate-contractlist <path-to-contractlist.json>')

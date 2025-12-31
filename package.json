@@ -13,7 +13,7 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate": "node ./bin/validate-contractlist.js"
+    "validate": "node ./bin/validate-contractlist.mjs"
   },
   "author": "indexedex",
   "license": "MIT",
