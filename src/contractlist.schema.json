@@ -43,7 +43,7 @@
                         }
                     },
                     "patternProperties": {
-                        "^[a-zA-Z0-9]+$": {
+                        "^(?!simulate$|resultStrategies$|arguments$)[a-zA-Z0-9]+$": {
                             "type": "string",
                             "description": "The function name as the key, mapping to its display label. Exactly one such key-value pair per function object."
                         }

@@ -1,12 +1,3 @@
-import factories from './addresses/sepolia/sepolia-factories.contractlist.json';
-import {
-    getBaseTokens,
-    getErc4626Tokens,
-    getUniV2PoolTokens,
-    getStrategyVaultTokens,
-    getBalancerPoolTokens
-} from './tokenlists';
-
 export type Address = `0x${string}`;
 
 export type ArgSource = string | { literal: any };
@@ -86,8 +77,9 @@ export type ContractListFactory = {
     functions: ContractListFunctionEntry[];
 };
 
-export function getFactories(chainId: number): ContractListFactory[] {
-    return (factories as unknown as ContractListFactory[]).filter(f => f.chainId === chainId);
+// Consumers should provide the concrete factories array (e.g., loaded from JSON).
+export function getFactories(factories: ContractListFactory[], chainId: number): ContractListFactory[] {
+    return factories.filter(f => f.chainId === chainId);
 }
 
 export function getFactoryFunctions(factory: ContractListFactory): { functionName: string; label: string; args: ContractListArgument[] }[] {
@@ -102,19 +94,15 @@ export function getFactoryFunctions(factory: ContractListFactory): { functionNam
     });
 }
 
-export function resolveLabel(value: string, labelField: ContractListArgUI['labelField'] | undefined): string {
+export type TokenGetters = Record<string, () => any[]>;
+
+export function resolveLabel(value: string, labelField: ContractListArgUI['labelField'] | undefined, tokenGetters?: TokenGetters): string {
     if (!labelField) return value;
     if (typeof labelField === 'string') {
         return value;
     }
+    if (!tokenGetters) return value;
     const { tokenlistPath, labelField: key } = labelField;
-    const tokenGetters: Record<string, () => any[]> = {
-        'sepolia-tokens.tokenlist.json': getBaseTokens,
-        'sepolia-erc4626.tokenlist.json': getErc4626Tokens,
-        'sepolia-uniV2pool.tokenlist.json': getUniV2PoolTokens,
-        'sepolia-strategy-vaults.tokenlist.json': getStrategyVaultTokens,
-        'sepolia-balancerv3-pools.tokenlist.json': getBalancerPoolTokens,
-    };
     const getterKey = Object.keys(tokenGetters).find(k => tokenlistPath.endsWith(k));
     if (!getterKey) return value;
     const entries = tokenGetters[getterKey]();
@@ -122,19 +110,13 @@ export function resolveLabel(value: string, labelField: ContractListArgUI['label
     return token ? token[key] || value : value;
 }
 
-export function buildOptionsFromUI(ui?: ContractListArgUI): Array<{ value: any; label: string }> {
+export function buildOptionsFromUI(ui?: ContractListArgUI, tokenGetters?: TokenGetters): Array<{ value: any; label: string }> {
     if (!ui) return [];
     if (ui.source === 'static' && ui.options) return ui.options;
     if (ui.source === 'tokenlist') {
         const path = ui.sourcePath || '';
-        let entries: Array<{ address: string; name: string; symbol: string }> = [];
-        const tokenGetters: Record<string, () => any[]> = {
-            'sepolia-tokens.tokenlist.json': getBaseTokens,
-            'sepolia-erc4626.tokenlist.json': getErc4626Tokens,
-            'sepolia-uniV2pool.tokenlist.json': getUniV2PoolTokens,
-            'sepolia-strategy-vaults.tokenlist.json': getStrategyVaultTokens,
-            'sepolia-balancerv3-pools.tokenlist.json': getBalancerPoolTokens,
-        };
+        let entries: Array<{ address: string; name?: string; symbol?: string }> = [];
+        if (!tokenGetters) return [];
         const getter = Object.entries(tokenGetters).find(([key]) => path.endsWith(key))?.[1];
         if (getter) entries = getter();
         if (ui.filters) {

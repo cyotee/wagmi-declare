@@ -1,0 +1,29 @@
+[
+  {
+    "chainId": 11155111,
+    "hookName": "UniswapV2StandardStrategyVaultPkg",
+    "name": "Uniswap V2 Strategy Vault Factory",
+    "functions": [
+      {
+        "deployVault": "Deploy Uniswap V2 Standard Exchange Strategy Vault",
+        "simulate": true,
+        "arguments": [
+          {
+            "name": "pool",
+            "type": "address",
+            "description": "Address of an existing Uniswap V2 liquidity pool",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "sepolia-uniV2pool.tokenlist.json",
+              "valueField": "address",
+              "labelField": "name",
+              "filters": { "chainId": 11155111 },
+              "allowManual": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
