@@ -7,6 +7,34 @@
       {
         "deployVault": "Deploy Uniswap V2 Standard Exchange Strategy Vault",
         "simulate": true,
+        "wizard": {
+          "steps": [
+            { "id": "config", "title": "Configure Vault", "groups": ["Vault Configuration"] },
+            { "id": "deposit", "title": "Set Deposit", "groups": ["Deposit Settings"] },
+            { "id": "confirm", "title": "Review & Confirm", "groups": ["Advanced Settings"] }
+          ],
+          "showProgressBar": true,
+          "showStepNumbers": true,
+          "allowSkip": false
+        },
+        "preview": {
+          "enabled": true,
+          "showTokenTransfers": true,
+          "showApprovals": true,
+          "showStateChanges": true,
+          "simulateOnChain": true,
+          "warningThresholds": {
+            "slippagePercent": 1,
+            "priceImpactPercent": 3
+          }
+        },
+        "gasEstimation": {
+          "enabled": true,
+          "showInNativeCurrency": true,
+          "showInUsd": true,
+          "includeApprovalGas": true,
+          "refreshIntervalMs": 15000
+        },
         "arguments": [
           {
             "group": "Vault Configuration",
@@ -23,7 +51,17 @@
                     { "value": "basic", "label": "Basic Vault" },
                     { "value": "strategy", "label": "Strategy Vault" }
                   ],
-                  "helpText": "Basic vaults are simpler, strategy vaults allow custom logic."
+                  "helpText": "Basic vaults are simpler, strategy vaults allow custom logic.",
+                  "layout": {
+                    "colSpan": 6,
+                    "order": 1,
+                    "emphasis": "prominent"
+                  },
+                  "i18n": {
+                    "labelKey": "vault.type.label",
+                    "descriptionKey": "vault.type.description",
+                    "namespace": "defi"
+                  }
                 }
               },
               {
@@ -159,7 +197,12 @@
                 "ui": {
                   "widget": "address",
                   "placeholder": "Defaults to connected wallet",
-                  "helpText": "Leave empty to use your connected wallet address."
+                  "helpText": "Leave empty to use your connected wallet address.",
+                  "addressBook": true,
+                  "layout": {
+                    "colSpan": 12,
+                    "order": 1
+                  }
                 }
               },
               {

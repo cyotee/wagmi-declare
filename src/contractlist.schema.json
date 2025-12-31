@@ -52,18 +52,30 @@
                                     "description": "Grouped arguments organized into collapsible sections."
                                 }
                             ]
+                        },
+                        "wizard": {
+                            "$ref": "#/$defs/wizardConfig",
+                            "description": "Multi-step wizard configuration for complex forms."
+                        },
+                        "preview": {
+                            "$ref": "#/$defs/previewConfig",
+                            "description": "Transaction preview configuration."
+                        },
+                        "gasEstimation": {
+                            "$ref": "#/$defs/gasEstimationConfig",
+                            "description": "Gas estimation display configuration."
                         }
                     },
                     "patternProperties": {
-                        "^(?!simulate$|resultStrategies$|arguments$)[a-zA-Z0-9]+$": {
+                        "^(?!simulate$|resultStrategies$|arguments$|wizard$|preview$|gasEstimation$)[a-zA-Z0-9]+$": {
                             "type": "string",
                             "description": "The function name as the key, mapping to its display label. Exactly one such key-value pair per function object."
                         }
                     },
                     "additionalProperties": false,
                     "minProperties": 1,
-                    "maxProperties": 4,
-                    "description": "Each object contains exactly one function name key (matching the pattern) mapping to a display label string, plus optional simulate, resultStrategies, and arguments."
+                    "maxProperties": 7,
+                    "description": "Each object contains exactly one function name key (matching the pattern) mapping to a display label string, plus optional simulate, resultStrategies, arguments, wizard, preview, and gasEstimation."
                 }
             }
         }
@@ -764,6 +776,19 @@
                             "description": "Number of decimal places to display."
                         }
                     }
+                },
+                "layout": {
+                    "$ref": "#/$defs/layoutHints",
+                    "description": "Layout hints for field positioning and sizing."
+                },
+                "i18n": {
+                    "$ref": "#/$defs/i18nConfig",
+                    "description": "Internationalization keys for multi-language support."
+                },
+                "addressBook": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable address book integration for this field."
                 }
             },
             "if": {
@@ -905,6 +930,245 @@
                 {
                     "type": "expression",
                     "expression": "amountIn * 0.997"
+                }
+            ]
+        },
+        "wizardConfig": {
+            "type": "object",
+            "required": ["steps"],
+            "properties": {
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "title"],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Unique identifier for this step."
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Display title for this step."
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Optional description for this step."
+                            },
+                            "fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Field names to include in this step."
+                            },
+                            "groups": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Group names to include in this step (alternative to fields)."
+                            },
+                            "validationMessage": {
+                                "type": "string",
+                                "description": "Custom validation message for this step."
+                            }
+                        }
+                    },
+                    "description": "Array of wizard steps."
+                },
+                "allowSkip": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Allow users to skip optional steps."
+                },
+                "showProgressBar": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Display a progress bar showing current step."
+                },
+                "showStepNumbers": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show step numbers in navigation."
+                }
+            },
+            "examples": [
+                {
+                    "steps": [
+                        { "id": "token", "title": "Select Token", "fields": ["depositToken"] },
+                        { "id": "amount", "title": "Enter Amount", "fields": ["depositAmount", "slippage"] },
+                        { "id": "confirm", "title": "Confirm", "fields": ["recipient", "deadline"] }
+                    ],
+                    "showProgressBar": true
+                }
+            ]
+        },
+        "previewConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable transaction preview."
+                },
+                "showTokenTransfers": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show expected token transfers."
+                },
+                "showStateChanges": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show expected state changes."
+                },
+                "showApprovals": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show required token approvals."
+                },
+                "simulateOnChain": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Simulate transaction on-chain for accurate preview."
+                },
+                "warningThresholds": {
+                    "type": "object",
+                    "properties": {
+                        "slippagePercent": {
+                            "type": "number",
+                            "description": "Warn if slippage exceeds this percentage."
+                        },
+                        "priceImpactPercent": {
+                            "type": "number",
+                            "description": "Warn if price impact exceeds this percentage."
+                        }
+                    }
+                }
+            },
+            "examples": [
+                {
+                    "enabled": true,
+                    "showTokenTransfers": true,
+                    "showApprovals": true,
+                    "warningThresholds": { "slippagePercent": 1, "priceImpactPercent": 3 }
+                }
+            ]
+        },
+        "gasEstimationConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable gas estimation display."
+                },
+                "showInNativeCurrency": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show gas cost in native currency (e.g., ETH)."
+                },
+                "showInUsd": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show gas cost in USD equivalent."
+                },
+                "showGasLimit": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show estimated gas limit."
+                },
+                "refreshIntervalMs": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 60000,
+                    "default": 15000,
+                    "description": "How often to refresh gas estimation (in milliseconds)."
+                },
+                "includeApprovalGas": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include gas for required approvals in estimate."
+                }
+            },
+            "examples": [
+                {
+                    "enabled": true,
+                    "showInNativeCurrency": true,
+                    "showInUsd": true,
+                    "refreshIntervalMs": 10000
+                }
+            ]
+        },
+        "layoutHints": {
+            "type": "object",
+            "properties": {
+                "colSpan": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12,
+                    "default": 12,
+                    "description": "Number of columns this field spans (1-12 grid)."
+                },
+                "order": {
+                    "type": "integer",
+                    "description": "Display order priority (lower numbers first)."
+                },
+                "hidden": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Hide this field from the UI (still included in transaction)."
+                },
+                "readonly": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Display as read-only (user cannot edit)."
+                },
+                "emphasis": {
+                    "type": "string",
+                    "enum": ["normal", "prominent", "subtle"],
+                    "default": "normal",
+                    "description": "Visual emphasis level for this field."
+                }
+            },
+            "examples": [
+                { "colSpan": 6, "order": 1 },
+                { "colSpan": 12, "emphasis": "prominent" }
+            ]
+        },
+        "i18nConfig": {
+            "type": "object",
+            "properties": {
+                "labelKey": {
+                    "type": "string",
+                    "description": "i18n key for the field label."
+                },
+                "descriptionKey": {
+                    "type": "string",
+                    "description": "i18n key for the field description."
+                },
+                "placeholderKey": {
+                    "type": "string",
+                    "description": "i18n key for placeholder text."
+                },
+                "helpTextKey": {
+                    "type": "string",
+                    "description": "i18n key for help text."
+                },
+                "errorMessageKey": {
+                    "type": "string",
+                    "description": "i18n key for validation error message."
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "i18n namespace for all keys in this field."
+                }
+            },
+            "examples": [
+                {
+                    "labelKey": "vault.depositToken.label",
+                    "descriptionKey": "vault.depositToken.description",
+                    "namespace": "defi"
                 }
             ]
         },

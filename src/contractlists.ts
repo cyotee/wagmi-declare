@@ -35,6 +35,65 @@ export type ComputeSource = {
     transformDecimals?: number;
 };
 
+// Phase 6: Wizard configuration
+export type WizardStep = {
+    id: string;
+    title: string;
+    description?: string;
+    fields?: string[];
+    groups?: string[];
+    validationMessage?: string;
+};
+
+export type WizardConfig = {
+    steps: WizardStep[];
+    allowSkip?: boolean;
+    showProgressBar?: boolean;
+    showStepNumbers?: boolean;
+};
+
+// Phase 6: Transaction preview configuration
+export type PreviewConfig = {
+    enabled?: boolean;
+    showTokenTransfers?: boolean;
+    showStateChanges?: boolean;
+    showApprovals?: boolean;
+    simulateOnChain?: boolean;
+    warningThresholds?: {
+        slippagePercent?: number;
+        priceImpactPercent?: number;
+    };
+};
+
+// Phase 6: Gas estimation configuration
+export type GasEstimationConfig = {
+    enabled?: boolean;
+    showInNativeCurrency?: boolean;
+    showInUsd?: boolean;
+    showGasLimit?: boolean;
+    refreshIntervalMs?: number;
+    includeApprovalGas?: boolean;
+};
+
+// Phase 6: Layout hints
+export type LayoutHints = {
+    colSpan?: number;
+    order?: number;
+    hidden?: boolean;
+    readonly?: boolean;
+    emphasis?: 'normal' | 'prominent' | 'subtle';
+};
+
+// Phase 6: Internationalization configuration
+export type I18nConfig = {
+    labelKey?: string;
+    descriptionKey?: string;
+    placeholderKey?: string;
+    helpTextKey?: string;
+    errorMessageKey?: string;
+    namespace?: string;
+};
+
 export type ContractListArgUI = {
     widget?: 'address' | 'text' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'slider' | 'tokenAmount' | 'datetime';
     tokenAmountConfig?: TokenAmountConfig;
@@ -78,6 +137,9 @@ export type ContractListArgUI = {
         unitLabel?: string;
         decimals?: number;
     };
+    layout?: LayoutHints;
+    i18n?: I18nConfig;
+    addressBook?: boolean;
 };
 
 export type DynamicDefault = {
@@ -140,7 +202,10 @@ export type ContractListFunctionEntry = {
     simulate?: boolean;
     resultStrategies?: ResultStrategy[];
     arguments?: ContractListArgument[] | ArgumentGroup[];
-} & Record<Exclude<string, "simulate" | "resultStrategies" | "arguments">, string>;
+    wizard?: WizardConfig;
+    preview?: PreviewConfig;
+    gasEstimation?: GasEstimationConfig;
+} & Record<Exclude<string, "simulate" | "resultStrategies" | "arguments" | "wizard" | "preview" | "gasEstimation">, string>;
 
 export type ContractListFactory = {
     chainId: number;

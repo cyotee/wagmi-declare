@@ -9,12 +9,19 @@ import {
   type ContractListArgUI,
   type ContractListArgComponent,
   type ContractListArgument,
+  type ContractListFunctionEntry,
   type DynamicDefault,
   type TokenAmountConfig,
   type DatetimeConfig,
   type ArgumentGroup,
   type OnChainValidation,
-  type ComputeSource
+  type ComputeSource,
+  type WizardConfig,
+  type WizardStep,
+  type PreviewConfig,
+  type GasEstimationConfig,
+  type LayoutHints,
+  type I18nConfig
 } from '../src'
 import { validateContractList } from '../src/validator'
 
@@ -634,6 +641,319 @@ describe('schema validation for Phase 5 features', () => {
                 debounceMs: 500
               }
             }
+          }
+        }]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+})
+
+// Phase 6 Tests
+
+describe('WizardConfig type', () => {
+  it('supports wizard steps with fields', () => {
+    const wizard: WizardConfig = {
+      steps: [
+        { id: 'token', title: 'Select Token', fields: ['depositToken'] },
+        { id: 'amount', title: 'Enter Amount', fields: ['depositAmount', 'slippage'] },
+        { id: 'confirm', title: 'Confirm', fields: ['recipient', 'deadline'] }
+      ],
+      showProgressBar: true,
+      showStepNumbers: true
+    }
+    expect(wizard.steps.length).toBe(3)
+    expect(wizard.steps[0].id).toBe('token')
+    expect(wizard.showProgressBar).toBe(true)
+  })
+
+  it('supports wizard steps with groups', () => {
+    const wizard: WizardConfig = {
+      steps: [
+        { id: 'basic', title: 'Basic Settings', groups: ['Vault Configuration'] },
+        { id: 'advanced', title: 'Advanced', groups: ['Advanced Settings'] }
+      ],
+      allowSkip: true
+    }
+    expect(wizard.steps[0].groups).toContain('Vault Configuration')
+    expect(wizard.allowSkip).toBe(true)
+  })
+})
+
+describe('PreviewConfig type', () => {
+  it('supports transaction preview configuration', () => {
+    const preview: PreviewConfig = {
+      enabled: true,
+      showTokenTransfers: true,
+      showStateChanges: true,
+      showApprovals: true,
+      simulateOnChain: false,
+      warningThresholds: {
+        slippagePercent: 1,
+        priceImpactPercent: 3
+      }
+    }
+    expect(preview.enabled).toBe(true)
+    expect(preview.warningThresholds?.slippagePercent).toBe(1)
+  })
+})
+
+describe('GasEstimationConfig type', () => {
+  it('supports gas estimation configuration', () => {
+    const gas: GasEstimationConfig = {
+      enabled: true,
+      showInNativeCurrency: true,
+      showInUsd: true,
+      showGasLimit: false,
+      refreshIntervalMs: 15000,
+      includeApprovalGas: true
+    }
+    expect(gas.enabled).toBe(true)
+    expect(gas.refreshIntervalMs).toBe(15000)
+  })
+})
+
+describe('LayoutHints type', () => {
+  it('supports column span and order', () => {
+    const layout: LayoutHints = {
+      colSpan: 6,
+      order: 1,
+      emphasis: 'prominent'
+    }
+    expect(layout.colSpan).toBe(6)
+    expect(layout.order).toBe(1)
+    expect(layout.emphasis).toBe('prominent')
+  })
+
+  it('supports hidden and readonly', () => {
+    const layout: LayoutHints = {
+      hidden: true,
+      readonly: true
+    }
+    expect(layout.hidden).toBe(true)
+    expect(layout.readonly).toBe(true)
+  })
+})
+
+describe('I18nConfig type', () => {
+  it('supports i18n keys', () => {
+    const i18n: I18nConfig = {
+      labelKey: 'vault.depositToken.label',
+      descriptionKey: 'vault.depositToken.description',
+      placeholderKey: 'vault.depositToken.placeholder',
+      helpTextKey: 'vault.depositToken.help',
+      errorMessageKey: 'vault.depositToken.error',
+      namespace: 'defi'
+    }
+    expect(i18n.labelKey).toBe('vault.depositToken.label')
+    expect(i18n.namespace).toBe('defi')
+  })
+})
+
+describe('ContractListArgUI with Phase 6 features', () => {
+  it('supports layout hints', () => {
+    const ui: ContractListArgUI = {
+      widget: 'text',
+      layout: {
+        colSpan: 6,
+        order: 2,
+        emphasis: 'prominent'
+      }
+    }
+    expect(ui.layout?.colSpan).toBe(6)
+  })
+
+  it('supports i18n configuration', () => {
+    const ui: ContractListArgUI = {
+      widget: 'address',
+      i18n: {
+        labelKey: 'form.address.label',
+        namespace: 'common'
+      }
+    }
+    expect(ui.i18n?.labelKey).toBe('form.address.label')
+  })
+
+  it('supports address book flag', () => {
+    const ui: ContractListArgUI = {
+      widget: 'address',
+      addressBook: true
+    }
+    expect(ui.addressBook).toBe(true)
+  })
+})
+
+describe('ContractListFunctionEntry with Phase 6 features', () => {
+  it('supports wizard configuration', () => {
+    const fn: ContractListFunctionEntry = {
+      deployVault: 'Deploy Vault',
+      wizard: {
+        steps: [
+          { id: 'step1', title: 'Step 1', fields: ['token'] }
+        ],
+        showProgressBar: true
+      }
+    }
+    expect(fn.wizard?.steps.length).toBe(1)
+  })
+
+  it('supports preview configuration', () => {
+    const fn: ContractListFunctionEntry = {
+      deployVault: 'Deploy Vault',
+      preview: {
+        enabled: true,
+        showTokenTransfers: true,
+        showApprovals: true
+      }
+    }
+    expect(fn.preview?.enabled).toBe(true)
+  })
+
+  it('supports gas estimation configuration', () => {
+    const fn: ContractListFunctionEntry = {
+      deployVault: 'Deploy Vault',
+      gasEstimation: {
+        enabled: true,
+        showInUsd: true,
+        refreshIntervalMs: 10000
+      }
+    }
+    expect(fn.gasEstimation?.refreshIntervalMs).toBe(10000)
+  })
+})
+
+describe('schema validation for Phase 6 features', () => {
+  it('validates contractlist with wizard configuration', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        wizard: {
+          steps: [
+            { id: 'step1', title: 'Select Token', fields: ['token'] },
+            { id: 'step2', title: 'Enter Amount', fields: ['amount'] }
+          ],
+          showProgressBar: true,
+          showStepNumbers: true
+        },
+        arguments: [
+          { name: 'token', type: 'address', description: 'Token address' },
+          { name: 'amount', type: 'uint256', description: 'Amount' }
+        ]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
+  it('validates contractlist with preview and gas estimation', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        preview: {
+          enabled: true,
+          showTokenTransfers: true,
+          showApprovals: true,
+          warningThresholds: { slippagePercent: 1 }
+        },
+        gasEstimation: {
+          enabled: true,
+          showInNativeCurrency: true,
+          showInUsd: true
+        },
+        arguments: [
+          { name: 'token', type: 'address', description: 'Token address' }
+        ]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
+  it('validates contractlist with layout hints', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [{
+          name: 'token',
+          type: 'address',
+          description: 'Token address',
+          ui: {
+            widget: 'address',
+            layout: {
+              colSpan: 6,
+              order: 1,
+              emphasis: 'prominent'
+            }
+          }
+        }, {
+          name: 'amount',
+          type: 'uint256',
+          description: 'Amount',
+          ui: {
+            widget: 'text',
+            layout: {
+              colSpan: 6,
+              order: 2
+            }
+          }
+        }]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
+  it('validates contractlist with i18n configuration', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [{
+          name: 'token',
+          type: 'address',
+          description: 'Token address',
+          ui: {
+            widget: 'address',
+            i18n: {
+              labelKey: 'vault.token.label',
+              descriptionKey: 'vault.token.description',
+              namespace: 'defi'
+            }
+          }
+        }]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
+  it('validates contractlist with address book', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [{
+          name: 'recipient',
+          type: 'address',
+          description: 'Recipient address',
+          ui: {
+            widget: 'address',
+            addressBook: true,
+            placeholder: 'Select from address book or enter manually'
           }
         }]
       }]

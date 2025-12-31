@@ -1,8 +1,8 @@
 # wagmi-declare Development Plan
 
-## Current Status: Phase 5 Complete
+## Current Status: Phase 6 Complete ✅
 
-Build and tests passing. Phases 1-5 implemented.
+Build and tests passing. All phases implemented.
 
 ### Progress Summary
 
@@ -13,7 +13,7 @@ Build and tests passing. Phases 1-5 implemented.
 | 3 | visibleWhen, dynamic defaults | 15 | ✅ Complete |
 | 4 | tokenAmount, datetime widgets | 18 | ✅ Complete |
 | 5 | Field groups, computed fields, async validation | 41 | ✅ Complete |
-| 6 | Wizard, preview, gas estimation, etc. | - | Pending |
+| 6 | Wizard, preview, gas estimation, layout, i18n | 59 | ✅ Complete |
 
 ---
 
@@ -150,15 +150,64 @@ Build and tests passing. Phases 1-5 implemented.
   }
   ```
 
-### Phase 6: Future Enhancements
-*Lower priority, implement as needed*
+### Phase 6: Future Enhancements ✅
+*All features implemented*
 
-- [ ] **Multi-step Wizard** - Break complex deployments into steps
-- [ ] **Transaction Preview** - Show what will happen before signing
-- [ ] **Gas Estimation** - Display estimated transaction cost
-- [ ] **Address Book** - Save/load frequently used addresses
-- [ ] **Layout Hints** - Column spans, field ordering priority
-- [ ] **i18n Support** - Multi-language labels and descriptions
+- [x] **Multi-step Wizard** - Break complex deployments into steps
+  - WizardConfig with steps array (id, title, fields/groups)
+  - showProgressBar, showStepNumbers, allowSkip options
+  ```json
+  "wizard": {
+    "steps": [
+      { "id": "config", "title": "Configure", "groups": ["Vault Configuration"] },
+      { "id": "deposit", "title": "Deposit", "groups": ["Deposit Settings"] }
+    ],
+    "showProgressBar": true
+  }
+  ```
+
+- [x] **Transaction Preview** - Show what will happen before signing
+  - PreviewConfig with token transfers, state changes, approvals
+  - simulateOnChain for accurate preview
+  - warningThresholds for slippage/price impact
+  ```json
+  "preview": {
+    "enabled": true,
+    "showTokenTransfers": true,
+    "showApprovals": true,
+    "warningThresholds": { "slippagePercent": 1 }
+  }
+  ```
+
+- [x] **Gas Estimation** - Display estimated transaction cost
+  - GasEstimationConfig with native currency and USD display
+  - includeApprovalGas, refreshIntervalMs
+  ```json
+  "gasEstimation": {
+    "enabled": true,
+    "showInNativeCurrency": true,
+    "showInUsd": true,
+    "refreshIntervalMs": 15000
+  }
+  ```
+
+- [x] **Address Book** - Save/load frequently used addresses
+  - addressBook flag on address fields
+  ```json
+  "ui": { "widget": "address", "addressBook": true }
+  ```
+
+- [x] **Layout Hints** - Column spans, field ordering priority
+  - LayoutHints with colSpan (1-12 grid), order, hidden, readonly, emphasis
+  ```json
+  "layout": { "colSpan": 6, "order": 1, "emphasis": "prominent" }
+  ```
+
+- [x] **i18n Support** - Multi-language labels and descriptions
+  - I18nConfig with labelKey, descriptionKey, placeholderKey, helpTextKey, namespace
+  ```json
+  "i18n": { "labelKey": "vault.token.label", "namespace": "defi" }
+  ```
 
 ---
 
