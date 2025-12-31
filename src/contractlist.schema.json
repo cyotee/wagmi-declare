@@ -412,6 +412,19 @@
                 "allowManual": {
                     "type": "boolean"
                 },
+                "placeholder": {
+                    "type": "string",
+                    "description": "Placeholder text shown in empty input fields."
+                },
+                "helpText": {
+                    "type": "string",
+                    "description": "Detailed help text shown in tooltip or expandable section."
+                },
+                "helpLink": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to external documentation for this field."
+                },
                 "source": {
                     "enum": [
                         "tokenlist",

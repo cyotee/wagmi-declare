@@ -1,17 +1,17 @@
 # wagmi-declare Development Plan
 
-## Current Status: Stable
+## Current Status: Phase 1 Complete
 
-Build and tests passing. Ready for schema improvements.
+Build and tests passing. Phase 1 (placeholder, helpText, helpLink) implemented.
 
 ---
 
 ## Implementation Order
 
-### Phase 1: Quick Wins
+### Phase 1: Quick Wins ✅
 *Simple schema additions, validate the pattern*
 
-- [ ] **Placeholder Text**
+- [x] **Placeholder Text**
   - Hint text for empty text/address inputs
   ```json
   "ui": {
@@ -19,7 +19,7 @@ Build and tests passing. Ready for schema improvements.
   }
   ```
 
-- [ ] **Help Text / Tooltips**
+- [x] **Help Text / Tooltips**
   - Detailed help separate from description
   - Optional link to documentation
   ```json

@@ -19,7 +19,10 @@
               "valueField": "address",
               "labelField": "name",
               "filters": { "chainId": 11155111 },
-              "allowManual": true
+              "allowManual": true,
+              "placeholder": "Select a pool or enter address...",
+              "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for. The vault will manage LP positions in this pool.",
+              "helpLink": "https://docs.indexedex.app/vaults/uniswap-v2"
             }
           }
         ]

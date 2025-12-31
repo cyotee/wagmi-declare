@@ -1,5 +1,46 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptionsFromUI, createTokenGetters, resolveLabel } from '../src'
+import { buildOptionsFromUI, createTokenGetters, resolveLabel, type ContractListArgUI } from '../src'
+import { validateContractList } from '../src/validator'
+
+describe('ContractListArgUI type', () => {
+  it('supports placeholder, helpText, and helpLink properties', () => {
+    const ui: ContractListArgUI = {
+      widget: 'address',
+      placeholder: '0x...',
+      helpText: 'Enter the token address',
+      helpLink: 'https://docs.example.com/tokens'
+    }
+    expect(ui.placeholder).toBe('0x...')
+    expect(ui.helpText).toBe('Enter the token address')
+    expect(ui.helpLink).toBe('https://docs.example.com/tokens')
+  })
+})
+
+describe('schema validation', () => {
+  it('validates contractlist with placeholder and help properties', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [{
+          name: 'tokenAddress',
+          type: 'address',
+          description: 'The token address',
+          ui: {
+            widget: 'address',
+            placeholder: '0x...',
+            helpText: 'Enter a valid ERC20 token address',
+            helpLink: 'https://docs.example.com/tokens'
+          }
+        }]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+})
 
 describe('buildOptionsFromUI', () => {
   const tokens = [

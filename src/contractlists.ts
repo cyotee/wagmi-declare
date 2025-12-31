@@ -5,6 +5,9 @@ export type ArgSource = string | { literal: any };
 export type ContractListArgUI = {
     widget?: 'address' | 'text' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'slider';
     allowManual?: boolean;
+    placeholder?: string;
+    helpText?: string;
+    helpLink?: string;
     source?: 'tokenlist' | 'contractlist' | 'static' | 'contractFunction';
     sourcePath?: string;
     valueField?: string;
