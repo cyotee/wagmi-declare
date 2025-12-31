@@ -1,0 +1,512 @@
+[[cli-tool]]
+= CLI Tool
+
+The `wagmi-declare` CLI tool generates contract list JSON files from Ethereum ABI files, saving you from manually writing contract list definitions.
+
+== Installation
+
+The CLI is included when you install the package:
+
+[source,bash]
+----
+npm install @daosys/wagmi-declare
+----
+
+== Basic Usage
+
+[source,bash]
+----
+npx wagmi-declare generate \
+  --abi ./MyContract.abi.json \
+  --chain-id 1 \
+  --name "My Contract"
+----
+
+This outputs the generated contract list JSON to stdout.
+
+== Command Options
+
+[cols="2,1,4,1"]
+|===
+| Option | Short | Description | Required
+
+| `--abi <path>`
+| `-a`
+| Path to ABI JSON file
+| Yes
+
+| `--chain-id <id>`
+| `-c`
+| Blockchain network ID
+| Yes
+
+| `--name <name>`
+| `-n`
+| Human-readable contract name
+| Yes
+
+| `--hook-name <name>`
+|
+| Identifier for wagmi hooks (optional)
+| No
+
+| `--output <path>`
+| `-o`
+| Output file path (prints to stdout if omitted)
+| No
+
+| `--include-view`
+|
+| Include view functions
+| No
+
+| `--include-pure`
+|
+| Include pure functions
+| No
+
+| `--help`
+|
+| Show help message
+| No
+|===
+
+== Examples
+
+=== Generate to File
+
+[source,bash]
+----
+npx wagmi-declare generate \
+  --abi ./UniswapV2Router.abi.json \
+  --chain-id 1 \
+  --name "Uniswap V2 Router" \
+  --output ./uniswap-router.contractlist.json
+----
+
+=== Custom Hook Name
+
+If you're using wagmi React hooks, you can specify a custom hook name:
+
+[source,bash]
+----
+npx wagmi-declare generate \
+  --abi ./Router.abi.json \
+  --chain-id 1 \
+  --name "Uniswap V2 Router" \
+  --hook-name "UniswapV2Router" \
+  --output ./router.contractlist.json
+----
+
+If omitted, `hookName` defaults to the name with spaces removed.
+
+=== Include Read Functions
+
+By default, only write functions (nonpayable/payable) are included. To include view or pure functions:
+
+[source,bash]
+----
+# Include view functions
+npx wagmi-declare generate \
+  --abi ./Token.abi.json \
+  --chain-id 1 \
+  --name "ERC20 Token" \
+  --include-view
+
+# Include both view and pure
+npx wagmi-declare generate \
+  --abi ./Token.abi.json \
+  --chain-id 1 \
+  --name "ERC20 Token" \
+  --include-view \
+  --include-pure
+----
+
+=== Using npm Script
+
+You can also run via the npm script:
+
+[source,bash]
+----
+npm run generate -- --abi ./Contract.abi.json --chain-id 1 --name "Contract"
+----
+
+== ABI File Formats
+
+The CLI accepts two ABI formats:
+
+=== Raw ABI Array
+
+[source,json]
+----
+[
+  {
+    "name": "transfer",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "to", "type": "address" },
+      { "name": "amount", "type": "uint256" }
+    ],
+    "outputs": [{ "type": "bool" }]
+  }
+]
+----
+
+=== Artifact with ABI Property
+
+[source,json]
+----
+{
+  "contractName": "MyToken",
+  "abi": [
+    {
+      "name": "transfer",
+      "type": "function",
+      ...
+    }
+  ],
+  "bytecode": "0x..."
+}
+----
+
+Both Hardhat and Foundry artifact formats are supported.
+
+== Smart Widget Inference
+
+The CLI automatically infers appropriate widgets based on parameter names and types:
+
+=== Token Amounts
+
+Parameters containing these keywords get the `tokenAmount` widget:
+
+* `amount`
+* `balance`
+* `value`
+* `deposit`
+* `withdraw`
+
+[source,json]
+----
+// Input: { "name": "amountIn", "type": "uint256" }
+// Output:
+{
+  "name": "amountIn",
+  "type": "uint256",
+  "description": "Amount In",
+  "ui": {
+    "widget": "tokenAmount",
+    "tokenAmountConfig": {
+      "showBalance": true,
+      "showMaxButton": true,
+      "tokenFrom": "tokenA"
+    }
+  }
+}
+----
+
+=== Timestamps and Deadlines
+
+Parameters containing these keywords get the `datetime` widget:
+
+* `deadline`
+* `timestamp`
+* `time`
+* `expir` (expiration, expires, etc.)
+* `until`
+* `start`
+* `end`
+
+[source,json]
+----
+// Input: { "name": "deadline", "type": "uint256" }
+// Output:
+{
+  "name": "deadline",
+  "type": "uint256",
+  "description": "Deadline",
+  "ui": {
+    "widget": "datetime",
+    "datetimeConfig": {
+      "format": "relative",
+      "minDate": "now",
+      "defaultOffset": "+30m"
+    }
+  }
+}
+----
+
+=== Slippage and Fees
+
+Parameters containing these keywords get the `slider` widget with basis points:
+
+* `slippage`
+* `percent`
+* `ratio`
+* `fee`
+* `bps`
+* `basis`
+
+[source,json]
+----
+// Input: { "name": "slippageBps", "type": "uint256" }
+// Output:
+{
+  "name": "slippageBps",
+  "type": "uint256",
+  "description": "Slippage Bps",
+  "ui": {
+    "widget": "slider",
+    "validation": {
+      "min": 0,
+      "max": 1000,
+      "step": 1
+    },
+    "display": {
+      "unit": "bps",
+      "unitLabel": "basis points",
+      "decimals": 0
+    }
+  }
+}
+----
+
+=== Recipient Addresses
+
+Parameters containing these keywords get address book integration:
+
+* `recipient`
+* `receiver`
+* `to`
+* `beneficiary`
+
+[source,json]
+----
+// Input: { "name": "recipient", "type": "address" }
+// Output:
+{
+  "name": "recipient",
+  "type": "address",
+  "description": "Recipient",
+  "ui": {
+    "widget": "address",
+    "addressBook": true,
+    "placeholder": "0x... or select from address book"
+  }
+}
+----
+
+=== Token Addresses
+
+Parameters with `token` in the name get helpful context:
+
+[source,json]
+----
+// Input: { "name": "tokenAddress", "type": "address" }
+// Output:
+{
+  "name": "tokenAddress",
+  "type": "address",
+  "description": "Token Address",
+  "ui": {
+    "widget": "address",
+    "helpText": "Token contract address"
+  }
+}
+----
+
+=== Token Pair Inference
+
+For liquidity functions with `tokenA`/`tokenB` patterns, the CLI correctly infers which token field to reference:
+
+[source,json]
+----
+// Input: addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, ...)
+// Output for amountADesired:
+{
+  "tokenAmountConfig": {
+    "tokenFrom": "tokenA"  // Correctly references tokenA
+  }
+}
+// Output for amountBDesired:
+{
+  "tokenAmountConfig": {
+    "tokenFrom": "tokenB"  // Correctly references tokenB
+  }
+}
+----
+
+== Type Mappings
+
+[cols="2,2,2"]
+|===
+| ABI Type | Contract List Type | Default Widget
+
+| `address`
+| `address`
+| `address`
+
+| `address[]`
+| `address[]`
+| `multiselect`
+
+| `uint256`, `uint128`, `uint64`, `uint32`, `uint16`
+| `uint256`
+| `text`
+
+| `uint8`
+| `uint8`
+| `text`
+
+| `int256`, `int128`, etc.
+| `uint256`
+| `text`
+
+| `bool`
+| `bool`
+| `checkbox`
+
+| `string`
+| `string`
+| `text`
+
+| `bytes`, `bytes32`, `bytes4`, etc.
+| `string`
+| `text`
+
+| `tuple`
+| `tuple` + components
+| grouped fields
+
+| `tuple[]`
+| array + components
+| array with add/remove
+|===
+
+== Post-Generation Customization
+
+The generated contract list is a starting point. You'll typically want to customize:
+
+=== Add Token List Sources
+
+[source,json]
+----
+{
+  "name": "tokenA",
+  "type": "address",
+  "ui": {
+    "widget": "select",
+    "source": "tokenlist",
+    "sourcePath": "tokens.tokenlist.json"
+  }
+}
+----
+
+=== Add Field Groups
+
+[source,json]
+----
+{
+  "arguments": {
+    "groups": [
+      {
+        "group": "Token Selection",
+        "fields": [...]
+      },
+      {
+        "group": "Amounts",
+        "fields": [...]
+      }
+    ]
+  }
+}
+----
+
+=== Add Wizard Steps
+
+[source,json]
+----
+{
+  "wizardConfig": {
+    "steps": [
+      { "id": "tokens", "title": "Select Tokens", "fields": [...] },
+      { "id": "amounts", "title": "Enter Amounts", "fields": [...] }
+    ]
+  }
+}
+----
+
+=== Add On-Chain Validation
+
+[source,json]
+----
+{
+  "ui": {
+    "onChainValidation": {
+      "abiCall": {
+        "function": "balanceOf",
+        "contractFrom": "token",
+        "argsFrom": ["connectedWallet"]
+      },
+      "condition": "gte",
+      "compareToField": "amount",
+      "errorMessage": "Insufficient balance"
+    }
+  }
+}
+----
+
+== Complete Workflow Example
+
+[source,bash]
+----
+# 1. Generate initial contract list
+npx wagmi-declare generate \
+  --abi ./artifacts/UniswapV2Router02.json \
+  --chain-id 1 \
+  --name "Uniswap V2 Router" \
+  --output ./src/contracts/uniswap-router.contractlist.json
+
+# 2. Edit the generated file to add:
+#    - Token list sources for token selects
+#    - Field groups for organization
+#    - Wizard steps for complex functions
+#    - On-chain validation
+#    - Preview and gas estimation config
+
+# 3. Validate the contract list
+npm run validate ./src/contracts/uniswap-router.contractlist.json
+
+# 4. Use in your application
+import contractList from './contracts/uniswap-router.contractlist.json';
+----
+
+== Troubleshooting
+
+=== No Functions Generated
+
+If you see "No write functions found in ABI", the ABI may only contain view/pure functions. Use `--include-view` or `--include-pure`:
+
+[source,bash]
+----
+npx wagmi-declare generate --abi ./Contract.abi.json --chain-id 1 --name "Contract" --include-view
+----
+
+=== Invalid ABI Format
+
+Ensure your ABI file is valid JSON. The CLI accepts:
+- Raw ABI arrays: `[{ "name": "...", ... }]`
+- Artifacts with abi property: `{ "abi": [...] }`
+
+=== Missing Required Options
+
+All of `--abi`, `--chain-id`, and `--name` are required:
+
+[source,bash]
+----
+# This will fail
+npx wagmi-declare generate --abi ./Contract.abi.json
+
+# This works
+npx wagmi-declare generate --abi ./Contract.abi.json --chain-id 1 --name "Contract"
+----

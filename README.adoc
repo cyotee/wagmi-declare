@@ -70,6 +70,7 @@ This guide documents the Contract List schema used by `@daosys/wagmi-declare` to
 
 [horizontal]
 New to contract lists?:: Start with <<getting-started>>
+Want to generate from ABI?:: Use the <<cli-tool>>
 Building basic forms?:: Read <<basic-forms>> and <<dynamic-forms>>
 Need DeFi-specific inputs?:: See <<defi-inputs>>
 Building complex UIs?:: Check <<complex-forms>> and <<production-features>>
@@ -78,6 +79,8 @@ Looking up a specific feature?:: Use the <<reference>> section
 '''
 
 include::docs/getting-started.adoc[leveloffset=+1]
+
+include::docs/guides/cli-tool.adoc[leveloffset=+1]
 
 include::docs/guides/basic-forms.adoc[leveloffset=+1]
 
