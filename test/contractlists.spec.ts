@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptionsFromUI, createTokenGetters, resolveLabel, type ContractListArgUI, type ContractListArgComponent, type DynamicDefault } from '../src'
+import { buildOptionsFromUI, createTokenGetters, resolveLabel, type ContractListArgUI, type ContractListArgComponent, type DynamicDefault, type TokenAmountConfig, type DatetimeConfig } from '../src'
 import { validateContractList } from '../src/validator'
 
 describe('ContractListArgUI type', () => {
@@ -70,6 +70,36 @@ describe('ContractListArgUI type', () => {
     expect(ui.visibleWhen?.condition).toBe('in')
     expect(ui.visibleWhen?.values).toContain('uniswap')
   })
+
+  it('supports tokenAmount widget with config', () => {
+    const ui: ContractListArgUI = {
+      widget: 'tokenAmount',
+      tokenAmountConfig: {
+        tokenFrom: 'selectedToken',
+        showMaxButton: true,
+        showUsdValue: true,
+        showBalance: true
+      }
+    }
+    expect(ui.widget).toBe('tokenAmount')
+    expect(ui.tokenAmountConfig?.tokenFrom).toBe('selectedToken')
+    expect(ui.tokenAmountConfig?.showMaxButton).toBe(true)
+  })
+
+  it('supports datetime widget with config', () => {
+    const ui: ContractListArgUI = {
+      widget: 'datetime',
+      datetimeConfig: {
+        format: 'relative',
+        minDate: 'now',
+        defaultOffset: '+7d'
+      }
+    }
+    expect(ui.widget).toBe('datetime')
+    expect(ui.datetimeConfig?.format).toBe('relative')
+    expect(ui.datetimeConfig?.minDate).toBe('now')
+    expect(ui.datetimeConfig?.defaultOffset).toBe('+7d')
+  })
 })
 
 describe('DynamicDefault type', () => {
@@ -98,6 +128,53 @@ describe('DynamicDefault type', () => {
 })
 
 describe('schema validation', () => {
+  it('validates contractlist with tokenAmount and datetime widgets', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [
+          {
+            name: 'token',
+            type: 'address',
+            description: 'Token to deposit',
+            ui: { widget: 'select', source: 'tokenlist', sourcePath: 'tokens.json' }
+          },
+          {
+            name: 'amount',
+            type: 'uint256',
+            description: 'Amount to deposit',
+            ui: {
+              widget: 'tokenAmount',
+              tokenAmountConfig: {
+                tokenFrom: 'token',
+                showMaxButton: true,
+                showBalance: true
+              }
+            }
+          },
+          {
+            name: 'deadline',
+            type: 'uint256',
+            description: 'Transaction deadline',
+            ui: {
+              widget: 'datetime',
+              datetimeConfig: {
+                format: 'relative',
+                minDate: 'now',
+                defaultOffset: '+1h'
+              }
+            }
+          }
+        ]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
   it('validates contractlist with visibleWhen and dynamic defaults', () => {
     const contractlist = [{
       chainId: 11155111,

@@ -429,9 +429,57 @@
                         "multiselect",
                         "checkbox",
                         "radio",
-                        "slider"
+                        "slider",
+                        "tokenAmount",
+                        "datetime"
                     ],
-                    "description": "Added more widget types for extensibility (e.g., slider for uint ranges)."
+                    "description": "Widget type for rendering the input field."
+                },
+                "tokenAmountConfig": {
+                    "type": "object",
+                    "properties": {
+                        "tokenFrom": {
+                            "type": "string",
+                            "description": "Field name containing the token address (for decimals lookup)."
+                        },
+                        "showMaxButton": {
+                            "type": "boolean",
+                            "description": "Show a MAX button to set maximum available balance."
+                        },
+                        "showUsdValue": {
+                            "type": "boolean",
+                            "description": "Show USD equivalent value."
+                        },
+                        "showBalance": {
+                            "type": "boolean",
+                            "description": "Show user's token balance."
+                        }
+                    },
+                    "description": "Configuration for tokenAmount widget."
+                },
+                "datetimeConfig": {
+                    "type": "object",
+                    "properties": {
+                        "format": {
+                            "type": "string",
+                            "enum": ["timestamp", "relative", "datetime", "date", "time"],
+                            "description": "Display format for the datetime value."
+                        },
+                        "minDate": {
+                            "type": "string",
+                            "enum": ["now", "custom"],
+                            "description": "Minimum selectable date."
+                        },
+                        "maxDate": {
+                            "type": "string",
+                            "description": "Maximum selectable date (ISO string or relative like '+30d')."
+                        },
+                        "defaultOffset": {
+                            "type": "string",
+                            "description": "Default offset from now (e.g., '+7d', '+1h', '+30m')."
+                        }
+                    },
+                    "description": "Configuration for datetime widget."
                 },
                 "allowManual": {
                     "type": "boolean"

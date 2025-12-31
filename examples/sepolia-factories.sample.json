@@ -40,6 +40,49 @@
             }
           },
           {
+            "name": "depositToken",
+            "type": "address",
+            "description": "Token to deposit into the vault",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "sepolia-tokens.tokenlist.json",
+              "valueField": "address",
+              "labelField": "symbol",
+              "helpText": "Select which token you want to deposit."
+            }
+          },
+          {
+            "name": "depositAmount",
+            "type": "uint256",
+            "description": "Amount of tokens to deposit",
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "depositToken",
+                "showMaxButton": true,
+                "showUsdValue": true,
+                "showBalance": true
+              },
+              "placeholder": "0.0",
+              "helpText": "Enter the amount of tokens to deposit. Click MAX to use your full balance."
+            }
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "description": "Transaction deadline",
+            "ui": {
+              "widget": "datetime",
+              "datetimeConfig": {
+                "format": "relative",
+                "minDate": "now",
+                "defaultOffset": "+30m"
+              },
+              "helpText": "Transaction will revert if not executed before this time."
+            }
+          },
+          {
             "name": "strategyAddress",
             "type": "address",
             "description": "Custom strategy contract address",

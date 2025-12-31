@@ -1,8 +1,8 @@
 # wagmi-declare Development Plan
 
-## Current Status: Phase 3 Complete
+## Current Status: Phase 4 Complete
 
-Build and tests passing. Phases 1-3 implemented.
+Build and tests passing. Phases 1-4 implemented.
 
 ---
 
@@ -69,26 +69,31 @@ Build and tests passing. Phases 1-3 implemented.
   }
   ```
 
-### Phase 4: Advanced Widgets
+### Phase 4: Advanced Widgets ✅
 *New widget types that use the foundation*
 
-- [ ] **Token Amount Widget**
+- [x] **Token Amount Widget**
   - New widget type for DeFi's most common input
-  - Support for token decimals, "MAX" button, USD conversion
-  - Reference token address from another field
+  - tokenAmountConfig: tokenFrom, showMaxButton, showUsdValue, showBalance
   ```json
   "widget": "tokenAmount",
-  "tokenFrom": "tokenAddress",
-  "showUsdValue": true,
-  "showMaxButton": true
+  "tokenAmountConfig": {
+    "tokenFrom": "tokenAddress",
+    "showMaxButton": true,
+    "showUsdValue": true
+  }
   ```
 
-- [ ] **Date/Time Widget**
+- [x] **Date/Time Widget**
   - For timestamp fields (deadlines, vesting schedules)
-  - Relative display option ("in 7 days")
+  - datetimeConfig: format, minDate, maxDate, defaultOffset
   ```json
   "widget": "datetime",
-  "display": { "format": "relative" }
+  "datetimeConfig": {
+    "format": "relative",
+    "minDate": "now",
+    "defaultOffset": "+7d"
+  }
   ```
 
 ### Phase 5: Complex Features

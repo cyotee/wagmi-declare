@@ -2,8 +2,24 @@ export type Address = `0x${string}`;
 
 export type ArgSource = string | { literal: any };
 
+export type TokenAmountConfig = {
+    tokenFrom?: string;
+    showMaxButton?: boolean;
+    showUsdValue?: boolean;
+    showBalance?: boolean;
+};
+
+export type DatetimeConfig = {
+    format?: 'timestamp' | 'relative' | 'datetime' | 'date' | 'time';
+    minDate?: 'now' | 'custom';
+    maxDate?: string;
+    defaultOffset?: string;
+};
+
 export type ContractListArgUI = {
-    widget?: 'address' | 'text' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'slider';
+    widget?: 'address' | 'text' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'slider' | 'tokenAmount' | 'datetime';
+    tokenAmountConfig?: TokenAmountConfig;
+    datetimeConfig?: DatetimeConfig;
     allowManual?: boolean;
     placeholder?: string;
     helpText?: string;
