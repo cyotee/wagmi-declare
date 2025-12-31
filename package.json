@@ -5,15 +5,20 @@
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "wagmi-declare": "./bin/generate-contractlist.mjs"
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "scripts": {
     "build": "tsc -p .",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate": "node ./bin/validate-contractlist.mjs"
+    "validate": "node ./bin/validate-contractlist.mjs",
+    "generate": "node ./bin/generate-contractlist.mjs"
   },
   "author": "indexedex",
   "license": "MIT",
