@@ -24,6 +24,27 @@
               "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for. The vault will manage LP positions in this pool.",
               "helpLink": "https://docs.indexedex.app/vaults/uniswap-v2"
             }
+          },
+          {
+            "name": "slippageTolerance",
+            "type": "uint256",
+            "description": "Maximum slippage tolerance for swaps",
+            "ui": {
+              "widget": "slider",
+              "placeholder": "50",
+              "helpText": "Set the maximum allowed slippage for swap operations. Higher values allow more price movement but may result in worse execution.",
+              "validation": {
+                "min": 0,
+                "max": 1000,
+                "step": 1,
+                "errorMessage": "Slippage must be between 0 and 1000 basis points (10%)"
+              },
+              "display": {
+                "unit": "bps",
+                "unitLabel": "basis points",
+                "decimals": 0
+              }
+            }
           }
         ]
       }

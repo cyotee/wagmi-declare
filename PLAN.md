@@ -1,8 +1,8 @@
 # wagmi-declare Development Plan
 
-## Current Status: Phase 1 Complete
+## Current Status: Phase 2 Complete
 
-Build and tests passing. Phase 1 (placeholder, helpText, helpLink) implemented.
+Build and tests passing. Phases 1-2 implemented.
 
 ---
 
@@ -29,10 +29,10 @@ Build and tests passing. Phase 1 (placeholder, helpText, helpLink) implemented.
   }
   ```
 
-### Phase 2: Validation Foundation
+### Phase 2: Validation Foundation ✅
 *Core improvements that other features build on*
 
-- [ ] **Numeric Constraints**
+- [x] **Numeric Constraints**
   - Min, max, step for uint256/uint8 fields
   - Unit display (wei/gwei/ether, basis points, percentages)
   ```json

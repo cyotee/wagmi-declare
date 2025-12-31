@@ -24,7 +24,18 @@ export type ContractListArgUI = {
         contractFrom?: ArgSource;
     };
     array?: { addLabel?: string; removeLabel?: string; itemLabelField?: string };
-    validation?: { regex?: string; errorMessage?: string };
+    validation?: {
+        regex?: string;
+        errorMessage?: string;
+        min?: number;
+        max?: number;
+        step?: number;
+    };
+    display?: {
+        unit?: 'wei' | 'gwei' | 'ether' | 'bps' | 'percent' | 'seconds' | 'minutes' | 'hours' | 'days';
+        unitLabel?: string;
+        decimals?: number;
+    };
 };
 
 export type ContractListArgComponent = {

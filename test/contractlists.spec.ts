@@ -14,9 +14,61 @@ describe('ContractListArgUI type', () => {
     expect(ui.helpText).toBe('Enter the token address')
     expect(ui.helpLink).toBe('https://docs.example.com/tokens')
   })
+
+  it('supports numeric validation constraints', () => {
+    const ui: ContractListArgUI = {
+      widget: 'slider',
+      validation: {
+        min: 0,
+        max: 10000,
+        step: 1,
+        errorMessage: 'Value must be between 0 and 10000'
+      }
+    }
+    expect(ui.validation?.min).toBe(0)
+    expect(ui.validation?.max).toBe(10000)
+    expect(ui.validation?.step).toBe(1)
+  })
+
+  it('supports display units', () => {
+    const ui: ContractListArgUI = {
+      widget: 'text',
+      display: {
+        unit: 'bps',
+        unitLabel: 'basis points',
+        decimals: 0
+      }
+    }
+    expect(ui.display?.unit).toBe('bps')
+    expect(ui.display?.unitLabel).toBe('basis points')
+    expect(ui.display?.decimals).toBe(0)
+  })
 })
 
 describe('schema validation', () => {
+  it('validates contractlist with numeric constraints and display units', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [{
+          name: 'slippage',
+          type: 'uint256',
+          description: 'Slippage tolerance',
+          ui: {
+            widget: 'slider',
+            validation: { min: 0, max: 10000, step: 1 },
+            display: { unit: 'bps', unitLabel: 'basis points', decimals: 0 }
+          }
+        }]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
   it('validates contractlist with placeholder and help properties', () => {
     const contractlist = [{
       chainId: 11155111,

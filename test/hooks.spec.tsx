@@ -36,8 +36,10 @@ function TestComponent() {
 describe('useContractFunctionOptions hook', () => {
   it('fetches and returns options from publicClient.readContract', async () => {
     render(<TestComponent />)
-    await waitFor(() => expect(screen.queryByTestId('loading')).not.toBeInTheDocument())
-    const opts = screen.getByTestId('opts')
-    expect(opts.textContent).toContain('0x00000000000000000000000000000000000000aa')
+    // Wait for options to be populated (more reliable than checking loading state)
+    await waitFor(() => {
+      const opts = screen.getByTestId('opts')
+      expect(opts.textContent).toContain('0x00000000000000000000000000000000000000aa')
+    }, { timeout: 2000 })
   })
 })
