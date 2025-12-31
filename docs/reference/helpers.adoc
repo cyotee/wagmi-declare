@@ -1,0 +1,608 @@
+[[helpers]]
+= Helper Functions
+
+This section documents the helper functions exported by `@daosys/wagmi-declare`.
+
+== Factory Functions
+
+=== getFactories
+
+Filter factories by chain ID.
+
+[source,typescript]
+----
+function getFactories(
+    factories: ContractListFactory[],
+    chainId: number
+): ContractListFactory[];
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `factories`
+| `ContractListFactory[]`
+| Array of all factories
+
+| `chainId`
+| `number`
+| Chain ID to filter by
+|===
+
+==== Returns
+
+Array of factories matching the specified chain ID.
+
+==== Example
+
+[source,typescript]
+----
+import { getFactories } from '@daosys/wagmi-declare';
+import contractList from './contracts.contractlist.json';
+
+// Get all mainnet factories
+const mainnetFactories = getFactories(contractList, 1);
+
+// Get Sepolia testnet factories
+const sepoliaFactories = getFactories(contractList, 11155111);
+
+console.log(`Found ${mainnetFactories.length} mainnet factories`);
+----
+
+=== getFactoryFunctions
+
+Extract function details from a factory.
+
+[source,typescript]
+----
+function getFactoryFunctions(factory: ContractListFactory): {
+    functionName: string;
+    label: string;
+    args: ContractListArgument[];
+}[];
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `factory`
+| `ContractListFactory`
+| Factory to extract functions from
+|===
+
+==== Returns
+
+Array of function objects with:
+- `functionName` - The Solidity function name
+- `label` - Display label for the function
+- `args` - Flattened array of arguments
+
+==== Example
+
+[source,typescript]
+----
+import { getFactories, getFactoryFunctions } from '@daosys/wagmi-declare';
+
+const factories = getFactories(contractList, 1);
+const factory = factories[0];
+
+const functions = getFactoryFunctions(factory);
+for (const fn of functions) {
+    console.log(`${fn.functionName}: ${fn.label}`);
+    console.log(`  Arguments: ${fn.args.length}`);
+}
+----
+
+== Argument Functions
+
+=== isGroupedArguments
+
+Check if arguments use the grouped structure.
+
+[source,typescript]
+----
+function isGroupedArguments(
+    args: ContractListArgument[] | ArgumentGroup[] | undefined
+): args is ArgumentGroup[];
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `args`
+| `ContractListArgument[] \| ArgumentGroup[] \| undefined`
+| Arguments to check
+|===
+
+==== Returns
+
+`true` if arguments are organized in groups, `false` otherwise.
+
+==== Example
+
+[source,typescript]
+----
+import { isGroupedArguments } from '@daosys/wagmi-declare';
+
+const fn = factory.functions[0];
+
+if (isGroupedArguments(fn.arguments)) {
+    console.log('Arguments are grouped');
+    fn.arguments.forEach(group => {
+        console.log(`Group: ${group.group}`);
+    });
+} else {
+    console.log('Arguments are flat');
+    fn.arguments?.forEach(arg => {
+        console.log(`Arg: ${arg.name}`);
+    });
+}
+----
+
+=== flattenArguments
+
+Get a flat array of arguments regardless of structure.
+
+[source,typescript]
+----
+function flattenArguments(
+    args: ContractListArgument[] | ArgumentGroup[] | undefined
+): ContractListArgument[];
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `args`
+| `ContractListArgument[] \| ArgumentGroup[] \| undefined`
+| Arguments to flatten
+|===
+
+==== Returns
+
+Flat array of all arguments.
+
+==== Example
+
+[source,typescript]
+----
+import { flattenArguments } from '@daosys/wagmi-declare';
+
+const fn = factory.functions[0];
+const allArgs = flattenArguments(fn.arguments);
+
+// Works regardless of whether arguments are grouped
+allArgs.forEach(arg => {
+    console.log(`${arg.name}: ${arg.type}`);
+});
+----
+
+=== getArgumentGroups
+
+Get argument groups (wraps flat arguments in a default group).
+
+[source,typescript]
+----
+function getArgumentGroups(
+    args: ContractListArgument[] | ArgumentGroup[] | undefined
+): ArgumentGroup[];
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `args`
+| `ContractListArgument[] \| ArgumentGroup[] \| undefined`
+| Arguments to get groups from
+|===
+
+==== Returns
+
+Array of argument groups. If arguments are flat, returns a single "Parameters" group containing all fields.
+
+==== Example
+
+[source,typescript]
+----
+import { getArgumentGroups } from '@daosys/wagmi-declare';
+
+const fn = factory.functions[0];
+const groups = getArgumentGroups(fn.arguments);
+
+// Always returns groups, even for flat arguments
+groups.forEach(group => {
+    console.log(`Group: ${group.group}`);
+    group.fields.forEach(field => {
+        console.log(`  - ${field.name}`);
+    });
+});
+----
+
+== Options Functions
+
+=== buildOptionsFromUI
+
+Build dropdown options from UI configuration.
+
+[source,typescript]
+----
+function buildOptionsFromUI(
+    ui?: ContractListArgUI,
+    tokenGetters?: TokenGetters
+): Array<{ value: any; label: string }>;
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `ui`
+| `ContractListArgUI \| undefined`
+| UI configuration with source info
+
+| `tokenGetters`
+| `TokenGetters \| undefined`
+| Map of getter functions for token data
+|===
+
+==== Returns
+
+Array of option objects with `value` and `label` properties.
+
+==== Supported Sources
+
+[cols="1,3"]
+|===
+| Source | Behavior
+
+| `static`
+| Returns `ui.options` directly
+
+| `tokenlist`
+| Uses `tokenGetters` to fetch tokens, applies filters
+
+| `contractFunction`
+| Not implemented (logs warning, returns empty)
+
+| `contractlist`
+| Not implemented (logs warning, returns empty)
+|===
+
+==== Example
+
+[source,typescript]
+----
+import { buildOptionsFromUI, TokenGetters } from '@daosys/wagmi-declare';
+import tokens from './tokens.tokenlist.json';
+
+// Create token getters
+const tokenGetters: TokenGetters = {
+    'tokens.tokenlist.json': () => tokens.tokens,
+};
+
+// Build options from UI config
+const argument = fn.args.find(a => a.name === 'token');
+const options = buildOptionsFromUI(argument?.ui, tokenGetters);
+
+// Render dropdown
+options.forEach(opt => {
+    console.log(`Value: ${opt.value}, Label: ${opt.label}`);
+});
+----
+
+==== Static Options Example
+
+[source,typescript]
+----
+const staticUI: ContractListArgUI = {
+    widget: 'select',
+    source: 'static',
+    options: [
+        { value: 'uniswap', label: 'Uniswap V2' },
+        { value: 'sushiswap', label: 'SushiSwap' },
+    ],
+};
+
+const options = buildOptionsFromUI(staticUI);
+// Returns: [{ value: 'uniswap', label: 'Uniswap V2' }, ...]
+----
+
+==== Token List Example
+
+[source,typescript]
+----
+const tokenUI: ContractListArgUI = {
+    widget: 'select',
+    source: 'tokenlist',
+    sourcePath: 'sepolia-tokens.tokenlist.json',
+    valueField: 'address',
+    labelField: 'symbol',
+    filters: { chainId: 11155111 },
+};
+
+const tokenGetters: TokenGetters = {
+    'sepolia-tokens.tokenlist.json': () => [
+        { address: '0x...', symbol: 'USDC', chainId: 11155111 },
+        { address: '0x...', symbol: 'WETH', chainId: 11155111 },
+    ],
+};
+
+const options = buildOptionsFromUI(tokenUI, tokenGetters);
+// Returns: [{ value: '0x...', label: 'USDC' }, ...]
+----
+
+=== resolveLabel
+
+Resolve an address to a display label.
+
+[source,typescript]
+----
+function resolveLabel(
+    value: string,
+    labelField: ContractListArgUI['labelField'] | undefined,
+    tokenGetters?: TokenGetters
+): string;
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `value`
+| `string`
+| The address or value to resolve
+
+| `labelField`
+| `string \| object \| undefined`
+| Label field configuration
+
+| `tokenGetters`
+| `TokenGetters \| undefined`
+| Token data getters
+|===
+
+==== Returns
+
+The resolved label, or the original value if no match found.
+
+==== Example
+
+[source,typescript]
+----
+import { resolveLabel, TokenGetters } from '@daosys/wagmi-declare';
+
+const tokenGetters: TokenGetters = {
+    'tokens.json': () => [
+        { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC' },
+    ],
+};
+
+const labelField = {
+    tokenlistPath: 'tokens.json',
+    labelField: 'symbol',
+};
+
+const label = resolveLabel(
+    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    labelField,
+    tokenGetters
+);
+// Returns: 'USDC'
+----
+
+== Validation Functions
+
+=== validateContractList
+
+Validate a contract list against the JSON schema.
+
+[source,typescript]
+----
+function validateContractList(data: unknown): {
+    valid: boolean;
+    errors?: string[];
+};
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `data`
+| `unknown`
+| Data to validate
+|===
+
+==== Returns
+
+Object with:
+- `valid` - Whether validation passed
+- `errors` - Array of error messages (if invalid)
+
+==== Example
+
+[source,typescript]
+----
+import { validateContractList } from '@daosys/wagmi-declare';
+
+const myList = [
+    {
+        chainId: 1,
+        hookName: 'MyFactory',
+        name: 'My Factory',
+        functions: [
+            {
+                mint: 'Mint Tokens',
+                arguments: [
+                    { name: 'to', type: 'address', description: 'Recipient' },
+                ],
+            },
+        ],
+    },
+];
+
+const result = validateContractList(myList);
+if (result.valid) {
+    console.log('Contract list is valid!');
+} else {
+    console.error('Validation errors:', result.errors);
+}
+----
+
+== React Hooks
+
+=== useContractFunctionOptions
+
+React hook for building options with wagmi integration.
+
+[source,typescript]
+----
+function useContractFunctionOptions(
+    factory: ContractListFactory,
+    functionName: string,
+    tokenGetters?: TokenGetters
+): {
+    functionLabel: string;
+    args: ContractListArgument[];
+    options: Record<string, Array<{ value: any; label: string }>>;
+};
+----
+
+==== Parameters
+
+[cols="1,1,3"]
+|===
+| Parameter | Type | Description
+
+| `factory`
+| `ContractListFactory`
+| Factory containing the function
+
+| `functionName`
+| `string`
+| Name of the function
+
+| `tokenGetters`
+| `TokenGetters \| undefined`
+| Token data getters
+|===
+
+==== Returns
+
+Object with:
+- `functionLabel` - Display label for the function
+- `args` - Function arguments
+- `options` - Map of argument names to their options
+
+==== Example
+
+[source,tsx]
+----
+import { useContractFunctionOptions, getFactories } from '@daosys/wagmi-declare';
+import contractList from './contracts.contractlist.json';
+
+function SwapForm() {
+    const factories = getFactories(contractList, 1);
+    const factory = factories[0];
+
+    const { functionLabel, args, options } = useContractFunctionOptions(
+        factory,
+        'swap',
+        tokenGetters
+    );
+
+    return (
+        <form>
+            <h2>{functionLabel}</h2>
+            {args.map(arg => (
+                <div key={arg.name}>
+                    <label>{arg.description}</label>
+                    {arg.ui?.widget === 'select' ? (
+                        <select>
+                            {options[arg.name]?.map(opt => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input type="text" />
+                    )}
+                </div>
+            ))}
+        </form>
+    );
+}
+----
+
+== Usage Patterns
+
+=== Complete Form Building
+
+[source,typescript]
+----
+import {
+    getFactories,
+    getFactoryFunctions,
+    buildOptionsFromUI,
+    isGroupedArguments,
+    getArgumentGroups,
+    flattenArguments,
+} from '@daosys/wagmi-declare';
+import contractList from './contracts.contractlist.json';
+
+// 1. Get factories for current chain
+const chainId = 1;
+const factories = getFactories(contractList, chainId);
+
+// 2. Select a factory and get its functions
+const factory = factories[0];
+const functions = getFactoryFunctions(factory);
+
+// 3. For each function, build the form
+functions.forEach(fn => {
+    console.log(`Building form for: ${fn.label}`);
+
+    // 4. Check if grouped and render accordingly
+    const funcDef = factory.functions.find(
+        f => Object.keys(f).some(k => k === fn.functionName)
+    );
+
+    if (isGroupedArguments(funcDef?.arguments)) {
+        const groups = getArgumentGroups(funcDef.arguments);
+        groups.forEach(group => {
+            console.log(`  Group: ${group.group}`);
+            group.fields.forEach(field => {
+                const options = buildOptionsFromUI(field.ui, tokenGetters);
+                console.log(`    - ${field.name} (${options.length} options)`);
+            });
+        });
+    } else {
+        fn.args.forEach(arg => {
+            const options = buildOptionsFromUI(arg.ui, tokenGetters);
+            console.log(`  - ${arg.name} (${options.length} options)`);
+        });
+    }
+});
+----

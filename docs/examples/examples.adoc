@@ -1,0 +1,704 @@
+[[examples]]
+= Example Contract Lists
+
+This appendix contains complete, working contract list examples for common DeFi patterns.
+
+== Token Swap Interface
+
+A complete token swap form with slippage control and deadline.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "UniswapV2Router",
+    "name": "Uniswap V2 Swap",
+    "functions": [
+      {
+        "swapExactTokensForTokens": "Swap Tokens",
+        "simulate": true,
+        "previewConfig": {
+          "showTokenTransfers": true,
+          "showApprovals": true,
+          "warningConditions": [
+            {
+              "field": "slippage",
+              "condition": "gt",
+              "value": 500,
+              "message": "High slippage may result in unfavorable execution"
+            }
+          ]
+        },
+        "gasEstimationConfig": {
+          "enabled": true,
+          "showInNative": true,
+          "showInUsd": true
+        },
+        "arguments": [
+          {
+            "name": "tokenIn",
+            "type": "address",
+            "description": "Token to sell",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "tokens.tokenlist.json",
+              "valueField": "address",
+              "labelField": "symbol",
+              "layout": { "colSpan": 6 }
+            }
+          },
+          {
+            "name": "tokenOut",
+            "type": "address",
+            "description": "Token to buy",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "tokens.tokenlist.json",
+              "valueField": "address",
+              "labelField": "symbol",
+              "layout": { "colSpan": 6 }
+            }
+          },
+          {
+            "name": "amountIn",
+            "type": "uint256",
+            "description": "Amount to sell",
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "tokenIn",
+                "showMaxButton": true,
+                "showBalance": true,
+                "showUsdValue": true
+              },
+              "layout": { "colSpan": 12, "emphasis": "prominent" },
+              "validation": {
+                "onChain": {
+                  "abiCall": {
+                    "function": "balanceOf",
+                    "inlineAbi": [{
+                      "name": "balanceOf",
+                      "type": "function",
+                      "inputs": [{ "name": "account", "type": "address" }],
+                      "outputs": [{ "type": "uint256" }]
+                    }],
+                    "contractFrom": "tokenIn",
+                    "argsFrom": ["connectedWallet"]
+                  },
+                  "condition": "gte",
+                  "compareToField": "amountIn",
+                  "errorMessage": "Insufficient balance",
+                  "debounceMs": 300
+                }
+              }
+            }
+          },
+          {
+            "name": "amountOutMin",
+            "type": "uint256",
+            "description": "Minimum amount to receive",
+            "computed": true,
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "tokenOut",
+                "showUsdValue": true
+              },
+              "layout": { "readonly": true }
+            }
+          },
+          {
+            "name": "slippage",
+            "type": "uint256",
+            "description": "Slippage tolerance",
+            "default": 50,
+            "ui": {
+              "widget": "slider",
+              "validation": {
+                "min": 0,
+                "max": 1000,
+                "step": 10,
+                "errorMessage": "Slippage must be 0-1000 bps"
+              },
+              "display": {
+                "unit": "bps",
+                "unitLabel": "bps",
+                "decimals": 0
+              },
+              "layout": { "colSpan": 6, "emphasis": "subtle" }
+            }
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "description": "Transaction deadline",
+            "ui": {
+              "widget": "datetime",
+              "datetimeConfig": {
+                "format": "relative",
+                "minDate": "now",
+                "defaultOffset": "+20m"
+              },
+              "layout": { "colSpan": 6, "emphasis": "subtle" }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+== Liquidity Provision with Wizard
+
+A multi-step wizard for adding liquidity.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "LiquidityRouter",
+    "name": "Add Liquidity",
+    "functions": [
+      {
+        "addLiquidity": "Add Liquidity",
+        "simulate": true,
+        "wizardConfig": {
+          "steps": [
+            {
+              "id": "tokens",
+              "title": "Select Tokens",
+              "description": "Choose the token pair for your liquidity position",
+              "groups": ["tokenSelection"]
+            },
+            {
+              "id": "amounts",
+              "title": "Enter Amounts",
+              "description": "Specify how much of each token to add",
+              "groups": ["amounts"]
+            },
+            {
+              "id": "review",
+              "title": "Review & Confirm",
+              "description": "Review transaction details before confirming",
+              "groups": ["settings"]
+            }
+          ],
+          "showProgressBar": true,
+          "showStepNumbers": true
+        },
+        "previewConfig": {
+          "showTokenTransfers": true,
+          "showApprovals": true
+        },
+        "gasEstimationConfig": {
+          "enabled": true,
+          "showInNative": true,
+          "showInUsd": true,
+          "includeApprovalGas": true
+        },
+        "arguments": {
+          "groups": [
+            {
+              "group": "Token Selection",
+              "id": "tokenSelection",
+              "description": "Select the tokens for your liquidity pair",
+              "fields": [
+                {
+                  "name": "tokenA",
+                  "type": "address",
+                  "description": "First token",
+                  "ui": {
+                    "widget": "select",
+                    "source": "tokenlist",
+                    "sourcePath": "tokens.json",
+                    "layout": { "colSpan": 6 }
+                  }
+                },
+                {
+                  "name": "tokenB",
+                  "type": "address",
+                  "description": "Second token",
+                  "ui": {
+                    "widget": "select",
+                    "source": "tokenlist",
+                    "sourcePath": "tokens.json",
+                    "layout": { "colSpan": 6 }
+                  }
+                }
+              ]
+            },
+            {
+              "group": "Amounts",
+              "id": "amounts",
+              "fields": [
+                {
+                  "name": "amountADesired",
+                  "type": "uint256",
+                  "description": "Amount of first token",
+                  "ui": {
+                    "widget": "tokenAmount",
+                    "tokenAmountConfig": {
+                      "tokenFrom": "tokenA",
+                      "showMaxButton": true,
+                      "showBalance": true
+                    },
+                    "layout": { "colSpan": 6 }
+                  }
+                },
+                {
+                  "name": "amountBDesired",
+                  "type": "uint256",
+                  "description": "Amount of second token",
+                  "ui": {
+                    "widget": "tokenAmount",
+                    "tokenAmountConfig": {
+                      "tokenFrom": "tokenB",
+                      "showMaxButton": true,
+                      "showBalance": true
+                    },
+                    "layout": { "colSpan": 6 }
+                  }
+                }
+              ]
+            },
+            {
+              "group": "Settings",
+              "id": "settings",
+              "collapsed": true,
+              "description": "Advanced transaction settings",
+              "fields": [
+                {
+                  "name": "amountAMin",
+                  "type": "uint256",
+                  "description": "Minimum amount of first token",
+                  "ui": {
+                    "widget": "tokenAmount",
+                    "tokenAmountConfig": { "tokenFrom": "tokenA" },
+                    "layout": { "colSpan": 6 }
+                  }
+                },
+                {
+                  "name": "amountBMin",
+                  "type": "uint256",
+                  "description": "Minimum amount of second token",
+                  "ui": {
+                    "widget": "tokenAmount",
+                    "tokenAmountConfig": { "tokenFrom": "tokenB" },
+                    "layout": { "colSpan": 6 }
+                  }
+                },
+                {
+                  "name": "to",
+                  "type": "address",
+                  "description": "Recipient of LP tokens",
+                  "default": { "source": "connectedWallet" },
+                  "ui": {
+                    "widget": "address",
+                    "addressBook": true,
+                    "helpText": "Defaults to your connected wallet"
+                  }
+                },
+                {
+                  "name": "deadline",
+                  "type": "uint256",
+                  "description": "Transaction deadline",
+                  "ui": {
+                    "widget": "datetime",
+                    "datetimeConfig": {
+                      "format": "relative",
+                      "defaultOffset": "+30m"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
+----
+
+== Token Vesting Setup
+
+Create vesting schedules with datetime inputs.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "VestingFactory",
+    "name": "Token Vesting",
+    "functions": [
+      {
+        "createVestingSchedule": "Create Vesting Schedule",
+        "arguments": [
+          {
+            "name": "beneficiary",
+            "type": "address",
+            "description": "Vesting recipient",
+            "ui": {
+              "widget": "address",
+              "addressBook": true,
+              "placeholder": "0x..."
+            }
+          },
+          {
+            "name": "token",
+            "type": "address",
+            "description": "Token to vest",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "tokens.json"
+            }
+          },
+          {
+            "name": "totalAmount",
+            "type": "uint256",
+            "description": "Total amount to vest",
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "token",
+                "showBalance": true,
+                "showUsdValue": true
+              }
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "uint256",
+            "description": "Vesting start time",
+            "ui": {
+              "widget": "datetime",
+              "datetimeConfig": {
+                "format": "datetime",
+                "minDate": "now"
+              },
+              "helpText": "When the vesting period begins"
+            }
+          },
+          {
+            "name": "cliffDuration",
+            "type": "uint256",
+            "description": "Cliff period",
+            "ui": {
+              "widget": "datetime",
+              "datetimeConfig": {
+                "format": "relative",
+                "defaultOffset": "+180d"
+              },
+              "helpText": "No tokens vest until after the cliff"
+            }
+          },
+          {
+            "name": "vestingDuration",
+            "type": "uint256",
+            "description": "Total vesting duration",
+            "ui": {
+              "widget": "datetime",
+              "datetimeConfig": {
+                "format": "relative",
+                "defaultOffset": "+365d"
+              },
+              "helpText": "Total time from start to fully vested"
+            }
+          },
+          {
+            "name": "revocable",
+            "type": "bool",
+            "description": "Can schedule be revoked?",
+            "default": false,
+            "ui": {
+              "widget": "checkbox",
+              "helpText": "If enabled, admin can revoke unvested tokens"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+== Vault Deposit with Protocol Selection
+
+Conditional fields based on selected protocol.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "VaultAggregator",
+    "name": "Vault Aggregator",
+    "functions": [
+      {
+        "deposit": "Deposit to Vault",
+        "arguments": [
+          {
+            "name": "protocol",
+            "type": "string",
+            "description": "Select protocol",
+            "ui": {
+              "widget": "select",
+              "source": "static",
+              "options": [
+                { "value": "aave", "label": "Aave V3" },
+                { "value": "compound", "label": "Compound V3" },
+                { "value": "yearn", "label": "Yearn V3" }
+              ]
+            }
+          },
+          {
+            "name": "token",
+            "type": "address",
+            "description": "Token to deposit",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "tokens.json"
+            }
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "description": "Amount to deposit",
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "token",
+                "showMaxButton": true,
+                "showBalance": true,
+                "showUsdValue": true
+              }
+            }
+          },
+          {
+            "name": "aaveReferralCode",
+            "type": "uint256",
+            "description": "Aave referral code",
+            "default": 0,
+            "ui": {
+              "widget": "text",
+              "visibleWhen": {
+                "field": "protocol",
+                "condition": "equals",
+                "value": "aave"
+              },
+              "helpText": "Optional referral code for Aave deposits"
+            }
+          },
+          {
+            "name": "compoundComet",
+            "type": "address",
+            "description": "Compound Comet address",
+            "ui": {
+              "widget": "select",
+              "source": "contractlist",
+              "visibleWhen": {
+                "field": "protocol",
+                "condition": "equals",
+                "value": "compound"
+              }
+            }
+          },
+          {
+            "name": "yearnVault",
+            "type": "address",
+            "description": "Yearn vault",
+            "ui": {
+              "widget": "select",
+              "source": "contractFunction",
+              "visibleWhen": {
+                "field": "protocol",
+                "condition": "equals",
+                "value": "yearn"
+              },
+              "abiCall": {
+                "function": "getVaults",
+                "argsFrom": ["token"]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+== Multi-Token Approval
+
+Handle array of token approvals.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "BatchApprover",
+    "name": "Batch Token Approval",
+    "functions": [
+      {
+        "batchApprove": "Approve Multiple Tokens",
+        "arguments": [
+          {
+            "name": "spender",
+            "type": "address",
+            "description": "Contract to approve",
+            "ui": {
+              "widget": "address",
+              "placeholder": "0x..."
+            }
+          },
+          {
+            "name": "tokens",
+            "type": "address[]",
+            "description": "Tokens to approve",
+            "minItems": 1,
+            "maxItems": 10,
+            "ui": {
+              "widget": "multiselect",
+              "source": "tokenlist",
+              "sourcePath": "tokens.json",
+              "array": {
+                "addLabel": "Add Token",
+                "removeLabel": "Remove",
+                "itemLabelField": "symbol"
+              }
+            }
+          },
+          {
+            "name": "amounts",
+            "type": "uint256[]",
+            "description": "Approval amounts",
+            "minItems": 1,
+            "ui": {
+              "widget": "text",
+              "helpText": "Use max uint256 for unlimited approval",
+              "array": {
+                "addLabel": "Add Amount"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+== Internationalized Form
+
+Form with i18n support.
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "TokenTransfer",
+    "name": "Token Transfer",
+    "functions": [
+      {
+        "transfer": "Transfer",
+        "arguments": [
+          {
+            "name": "token",
+            "type": "address",
+            "description": "Token to transfer",
+            "ui": {
+              "widget": "select",
+              "source": "tokenlist",
+              "sourcePath": "tokens.json",
+              "i18n": {
+                "labelKey": "transfer.token.label",
+                "descriptionKey": "transfer.token.description",
+                "namespace": "defi"
+              }
+            }
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "description": "Recipient address",
+            "ui": {
+              "widget": "address",
+              "addressBook": true,
+              "i18n": {
+                "labelKey": "transfer.recipient.label",
+                "descriptionKey": "transfer.recipient.description",
+                "placeholderKey": "transfer.recipient.placeholder",
+                "namespace": "defi"
+              }
+            }
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "description": "Amount to transfer",
+            "ui": {
+              "widget": "tokenAmount",
+              "tokenAmountConfig": {
+                "tokenFrom": "token",
+                "showMaxButton": true,
+                "showBalance": true
+              },
+              "i18n": {
+                "labelKey": "transfer.amount.label",
+                "descriptionKey": "transfer.amount.description",
+                "helpTextKey": "transfer.amount.help",
+                "namespace": "defi"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+Corresponding i18n file (`defi.json`):
+
+[source,json]
+----
+{
+  "transfer": {
+    "token": {
+      "label": "Token",
+      "description": "Select the token you want to transfer"
+    },
+    "recipient": {
+      "label": "Recipient",
+      "description": "Address that will receive the tokens",
+      "placeholder": "0x... or ENS name"
+    },
+    "amount": {
+      "label": "Amount",
+      "description": "How many tokens to send",
+      "help": "Click MAX to send your entire balance"
+    }
+  }
+}
+----
+
+== Further Reading
+
+For more details on each feature used in these examples:
+
+* <<getting-started>>: Basic contract list structure
+* <<basic-forms>>: Validation and display formatting
+* <<dynamic-forms>>: Conditional visibility and dynamic defaults
+* <<defi-inputs>>: Token amount and datetime widgets
+* <<complex-forms>>: Groups, computed fields, and on-chain validation
+* <<production-features>>: Wizards, preview, gas estimation, layout, i18n

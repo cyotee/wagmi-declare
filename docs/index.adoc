@@ -1,0 +1,56 @@
+= Contract List Schema Guide
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+:experimental:
+
+// Document metadata
+:author: IndexedEx Team
+:revnumber: 1.0
+:revdate: 2024-12-31
+
+[preface]
+== About This Guide
+
+This guide documents the Contract List schema used by `@daosys/wagmi-declare` to generate dynamic UI forms for DeFi smart contract interactions. The schema allows you to declaratively define how contract functions should be presented to users, including input validation, dynamic behavior, and production-ready features like multi-step wizards and gas estimation.
+
+=== Who Should Read This
+
+* **DeFi developers** building frontends for smart contracts
+* **Protocol teams** wanting to provide better UX for their contracts
+* **Tool builders** integrating contract list schemas into their applications
+
+=== How to Use This Guide
+
+[horizontal]
+New to contract lists?:: Start with <<getting-started>>
+Building basic forms?:: Read <<basic-forms>> and <<dynamic-forms>>
+Need DeFi-specific inputs?:: See <<defi-inputs>>
+Building complex UIs?:: Check <<complex-forms>> and <<production-features>>
+Looking up a specific feature?:: Use the <<reference>> section
+
+'''
+
+include::getting-started.adoc[leveloffset=+1]
+
+include::guides/basic-forms.adoc[leveloffset=+1]
+
+include::guides/dynamic-forms.adoc[leveloffset=+1]
+
+include::guides/defi-inputs.adoc[leveloffset=+1]
+
+include::guides/complex-forms.adoc[leveloffset=+1]
+
+include::guides/production-features.adoc[leveloffset=+1]
+
+include::reference/schema-reference.adoc[leveloffset=+1]
+
+include::reference/types.adoc[leveloffset=+1]
+
+include::reference/helpers.adoc[leveloffset=+1]
+
+[appendix]
+include::examples/examples.adoc[leveloffset=+1]

@@ -1,0 +1,265 @@
+[[getting-started]]
+= Getting Started
+
+This chapter introduces the Contract List schema and walks you through creating your first contract list definition.
+
+== What is a Contract List?
+
+A Contract List is a JSON file that describes smart contract factories and their functions in a way that enables automatic UI generation. Instead of manually building forms for each contract interaction, you define the schema once and let the UI framework render appropriate inputs.
+
+.Contract List in Action
+[plantuml, contract-list-flow, svg]
+----
+@startuml
+skinparam backgroundColor transparent
+rectangle "Contract List JSON" as json
+rectangle "wagmi-declare" as lib
+rectangle "React/Vue/Svelte UI" as ui
+rectangle "Smart Contract" as contract
+
+json -> lib : parsed
+lib -> ui : types + options
+ui -> contract : transaction
+@enduml
+----
+
+== Minimal Example
+
+Here's the simplest possible contract list:
+
+.minimal-example.json
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "MyTokenFactory",
+    "name": "My Token Factory",
+    "functions": [
+      {
+        "mint": "Mint Tokens",
+        "arguments": [
+          {
+            "name": "recipient",
+            "type": "address",
+            "description": "Address to receive tokens"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "description": "Number of tokens to mint"
+          }
+        ]
+      }
+    ]
+  }
+]
+----
+
+This defines:
+
+* A factory on chain ID 1 (Ethereum mainnet)
+* A `mint` function with a display label "Mint Tokens"
+* Two arguments: an address and a uint256
+
+== Contract List Structure
+
+Every contract list is an array of factory objects:
+
+[source,json]
+----
+[
+  {
+    "chainId": <number>,        // <1>
+    "hookName": "<string>",     // <2>
+    "name": "<string>",         // <3>
+    "functions": [...]          // <4>
+  }
+]
+----
+<1> The chain ID where this factory is deployed
+<2> Internal identifier used by your application
+<3> Human-readable display name
+<4> Array of function definitions
+
+=== Function Entries
+
+Each function entry has a unique key-value pair for the function name and label:
+
+[source,json]
+----
+{
+  "functionName": "Display Label",  // <1>
+  "simulate": true,                  // <2>
+  "arguments": [...]                 // <3>
+}
+----
+<1> The function name (key) maps to its display label (value)
+<2> Optional: simulate the transaction before execution
+<3> Array of argument definitions
+
+=== Argument Definitions
+
+Arguments define the inputs for each function:
+
+[source,json]
+----
+{
+  "name": "tokenAddress",           // <1>
+  "type": "address",                // <2>
+  "description": "The ERC20 token", // <3>
+  "optional": false,                // <4>
+  "default": "0x...",               // <5>
+  "ui": { ... }                     // <6>
+}
+----
+<1> Argument name (matches the Solidity function parameter)
+<2> Solidity type: `address`, `uint256`, `bool`, `string`, etc.
+<3> Human-readable description shown to users
+<4> Whether this argument can be omitted
+<5> Default value (static or dynamic)
+<6> UI configuration for rendering
+
+== Supported Solidity Types
+
+The schema supports these Solidity types:
+
+[cols="1,2,2"]
+|===
+| Type | Description | Example Value
+
+| `address`
+| Ethereum address
+| `"0x742d35Cc6634C0532925a3b844Bc9e7595f..."`
+
+| `address[]`
+| Array of addresses
+| `["0x...", "0x..."]`
+
+| `uint8`
+| 8-bit unsigned integer
+| `255`
+
+| `uint256`
+| 256-bit unsigned integer
+| `"1000000000000000000"`
+
+| `uint256[]`
+| Array of uint256
+| `["100", "200"]`
+
+| `bool`
+| Boolean
+| `true` or `false`
+
+| `string`
+| UTF-8 string
+| `"Hello World"`
+
+| `tuple`
+| Struct (requires `components`)
+| `{ "token": "0x...", "amount": "100" }`
+
+| `tuple[]`
+| Array of structs
+| `[{ ... }, { ... }]`
+|===
+
+== Adding UI Hints
+
+The `ui` object controls how the input is rendered:
+
+[source,json]
+----
+{
+  "name": "recipient",
+  "type": "address",
+  "description": "Address to receive tokens",
+  "ui": {
+    "widget": "address",
+    "placeholder": "0x...",
+    "helpText": "Enter the wallet address that should receive the minted tokens.",
+    "helpLink": "https://docs.example.com/addresses"
+  }
+}
+----
+
+Available widgets:
+
+[horizontal]
+`address`:: Ethereum address input with validation
+`text`:: General text input
+`select`:: Dropdown selection
+`multiselect`:: Multiple selection
+`checkbox`:: Boolean toggle
+`radio`:: Radio button group
+`slider`:: Numeric slider
+`tokenAmount`:: Token amount with decimals handling
+`datetime`:: Date/time picker for timestamps
+
+== Installing the Library
+
+[source,bash]
+----
+npm install @daosys/wagmi-declare
+----
+
+Peer dependencies:
+
+[source,bash]
+----
+npm install wagmi viem react
+----
+
+== Using with TypeScript
+
+Import the types and helper functions:
+
+[source,typescript]
+----
+import {
+  type ContractListFactory,
+  type ContractListArgument,
+  getFactories,
+  getFactoryFunctions,
+  buildOptionsFromUI
+} from '@daosys/wagmi-declare';
+
+// Load your contract list
+import contractList from './my-contracts.contractlist.json';
+
+// Filter by chain
+const mainnetFactories = getFactories(contractList, 1);
+
+// Get function details
+const functions = getFactoryFunctions(mainnetFactories[0]);
+----
+
+== Validating Your Schema
+
+Use the built-in validator:
+
+[source,bash]
+----
+npm run validate path/to/your-contracts.contractlist.json
+----
+
+Or programmatically:
+
+[source,typescript]
+----
+import { validateContractList } from '@daosys/wagmi-declare';
+
+const result = validateContractList(myContractList);
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+----
+
+== Next Steps
+
+Now that you understand the basics:
+
+* <<basic-forms>>: Learn about validation, placeholders, and help text
+* <<dynamic-forms>>: Make fields appear/disappear based on other inputs
+* <<defi-inputs>>: Use specialized widgets for token amounts and deadlines

@@ -1,0 +1,510 @@
+[[complex-forms]]
+= Complex Form Organization
+
+This chapter covers advanced form organization: grouping fields into sections, computed read-only values, and asynchronous on-chain validation.
+
+== Field Groups
+
+Use `ArgumentGroup` to organize related fields into collapsible sections:
+
+[source,json]
+----
+{
+  "functions": [
+    {
+      "addLiquidity": "Add Liquidity",
+      "arguments": {
+        "groups": [
+          {
+            "id": "tokenPair",
+            "title": "Token Pair",
+            "description": "Select the tokens for your liquidity position",
+            "collapsible": false,
+            "fields": ["tokenA", "tokenB"]
+          },
+          {
+            "id": "amounts",
+            "title": "Amounts",
+            "fields": ["amountA", "amountB"]
+          },
+          {
+            "id": "advanced",
+            "title": "Advanced Settings",
+            "description": "Optional configuration",
+            "collapsible": true,
+            "defaultCollapsed": true,
+            "fields": ["slippage", "deadline"]
+          }
+        ],
+        "fields": [
+          { "name": "tokenA", "type": "address", ... },
+          { "name": "tokenB", "type": "address", ... },
+          { "name": "amountA", "type": "uint256", ... },
+          { "name": "amountB", "type": "uint256", ... },
+          { "name": "slippage", "type": "uint256", ... },
+          { "name": "deadline", "type": "uint256", ... }
+        ]
+      }
+    }
+  ]
+}
+----
+
+=== Group Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `id`
+| `string`
+| Unique identifier for the group
+| Required
+
+| `title`
+| `string`
+| Display title for the section
+| Required
+
+| `description`
+| `string`
+| Optional explanatory text
+| None
+
+| `collapsible`
+| `boolean`
+| Whether the group can be collapsed
+| `false`
+
+| `defaultCollapsed`
+| `boolean`
+| Start in collapsed state
+| `false`
+
+| `fields`
+| `string[]`
+| Field names belonging to this group
+| Required
+|===
+
+=== Detecting Grouped Arguments
+
+Use the helper function to check if arguments use groups:
+
+[source,typescript]
+----
+import { isGroupedArguments, flattenArguments, getArgumentGroups } from '@daosys/wagmi-declare';
+
+const func = getFactoryFunctions(factory)[0];
+
+if (isGroupedArguments(func.arguments)) {
+  // Arguments are organized in groups
+  const groups = getArgumentGroups(func.arguments);
+  const allFields = flattenArguments(func.arguments);
+
+  groups.forEach(group => {
+    console.log(`Group: ${group.title}`);
+    group.fields.forEach(fieldName => {
+      const field = allFields.find(f => f.name === fieldName);
+      console.log(`  - ${field.name}: ${field.description}`);
+    });
+  });
+} else {
+  // Plain array of arguments
+  func.arguments.forEach(arg => {
+    console.log(`${arg.name}: ${arg.description}`);
+  });
+}
+----
+
+=== Helper Functions
+
+[cols="1,3"]
+|===
+| Function | Description
+
+| `isGroupedArguments(args)`
+| Returns `true` if arguments use the grouped structure
+
+| `flattenArguments(args)`
+| Returns flat array of `ContractListArgument` regardless of structure
+
+| `getArgumentGroups(args)`
+| Returns array of `ArgumentGroup` objects (empty for non-grouped)
+|===
+
+== Computed Fields
+
+Computed fields display read-only values derived from other fields or on-chain data. They're useful for showing calculated totals, estimated outputs, or current state.
+
+=== Computed from Another Field
+
+[source,json]
+----
+{
+  "name": "estimatedOutput",
+  "type": "uint256",
+  "description": "Estimated tokens received",
+  "ui": {
+    "widget": "tokenAmount",
+    "computeSource": {
+      "type": "field",
+      "field": "amountIn",
+      "transform": "multiply",
+      "transformValue": "0.997"
+    }
+  }
+}
+----
+
+=== Computed from On-Chain Call
+
+[source,json]
+----
+{
+  "name": "currentPrice",
+  "type": "uint256",
+  "description": "Current pool price",
+  "ui": {
+    "widget": "text",
+    "computeSource": {
+      "type": "abiCall",
+      "abiCall": {
+        "function": "getReserves",
+        "inlineAbi": [{
+          "name": "getReserves",
+          "type": "function",
+          "inputs": [],
+          "outputs": [
+            { "name": "reserve0", "type": "uint112" },
+            { "name": "reserve1", "type": "uint112" },
+            { "name": "blockTimestampLast", "type": "uint32" }
+          ]
+        }],
+        "contractFrom": "poolAddress",
+        "resultPath": "reserve0"
+      }
+    }
+  }
+}
+----
+
+=== Computed from Expression
+
+[source,json]
+----
+{
+  "name": "totalValue",
+  "type": "uint256",
+  "description": "Total USD value",
+  "ui": {
+    "widget": "text",
+    "computeSource": {
+      "type": "expression",
+      "expression": "amountA * priceA + amountB * priceB"
+    },
+    "display": {
+      "unit": "usd",
+      "decimals": 2
+    }
+  }
+}
+----
+
+=== ComputeSource Types
+
+[cols="1,2,2"]
+|===
+| Type | Required Properties | Use Case
+
+| `field`
+| `field`, optional `transform`
+| Mirror or transform another field's value
+
+| `abiCall`
+| `abiCall` configuration
+| Fetch computed value from on-chain
+
+| `expression`
+| `expression` string
+| Calculate from multiple fields
+|===
+
+=== Transforms
+
+When using `type: "field"`, apply transforms:
+
+[cols="1,2,2"]
+|===
+| Transform | TransformValue | Result
+
+| `multiply`
+| `"0.997"`
+| field * 0.997
+
+| `divide`
+| `"100"`
+| field / 100
+
+| `add`
+| `"1000000"`
+| field + 1000000
+
+| `subtract`
+| `"500"`
+| field - 500
+|===
+
+== On-Chain Validation
+
+Validate field values against on-chain state. This enables real-time feedback like "insufficient balance" or "pool does not exist".
+
+=== Basic On-Chain Validation
+
+[source,json]
+----
+{
+  "name": "amount",
+  "type": "uint256",
+  "description": "Amount to transfer",
+  "ui": {
+    "widget": "tokenAmount",
+    "tokenAmountConfig": {
+      "tokenFrom": "token",
+      "showBalance": true
+    },
+    "onChainValidation": {
+      "abiCall": {
+        "function": "balanceOf",
+        "inlineAbi": [{
+          "name": "balanceOf",
+          "type": "function",
+          "inputs": [{ "name": "account", "type": "address" }],
+          "outputs": [{ "type": "uint256" }]
+        }],
+        "contractFrom": "token",
+        "argsFrom": ["connectedWallet"]
+      },
+      "condition": "lte",
+      "errorMessage": "Insufficient balance"
+    }
+  }
+}
+----
+
+=== Validation Conditions
+
+[cols="1,2,2"]
+|===
+| Condition | Description | Valid When
+
+| `exists`
+| Result is truthy
+| `result != 0` or `result != false`
+
+| `notExists`
+| Result is falsy
+| `result == 0` or `result == false`
+
+| `eq`
+| Equals compareValue
+| `result == compareValue`
+
+| `neq`
+| Not equals compareValue
+| `result != compareValue`
+
+| `gt`
+| Greater than compareValue
+| `result > compareValue`
+
+| `gte`
+| Greater than or equal
+| `result >= compareValue`
+
+| `lt`
+| Less than compareValue
+| `result < compareValue`
+
+| `lte`
+| Less than or equal
+| `result <= compareValue`
+
+| `in`
+| In array of values
+| `compareValues.includes(result)`
+
+| `notIn`
+| Not in array of values
+| `!compareValues.includes(result)`
+|===
+
+=== Dynamic Comparison
+
+Compare against another field's value instead of a static value:
+
+[source,json]
+----
+{
+  "onChainValidation": {
+    "abiCall": {
+      "function": "allowance",
+      "inlineAbi": [{
+        "name": "allowance",
+        "type": "function",
+        "inputs": [
+          { "name": "owner", "type": "address" },
+          { "name": "spender", "type": "address" }
+        ],
+        "outputs": [{ "type": "uint256" }]
+      }],
+      "contractFrom": "token",
+      "argsFrom": ["connectedWallet", { "literal": "0xRouterAddress" }]
+    },
+    "condition": "gte",
+    "compareToField": "amount",
+    "errorMessage": "Insufficient allowance. Please approve tokens first."
+  }
+}
+----
+
+=== Debouncing Validation
+
+Prevent excessive RPC calls with debounce:
+
+[source,json]
+----
+{
+  "onChainValidation": {
+    "abiCall": { ... },
+    "condition": "exists",
+    "errorMessage": "Pool does not exist",
+    "debounceMs": 500
+  }
+}
+----
+
+=== Complete Validation Example
+
+A swap form with balance and allowance validation:
+
+[source,json]
+----
+[
+  {
+    "name": "tokenIn",
+    "type": "address",
+    "description": "Token to sell",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "amountIn",
+    "type": "uint256",
+    "description": "Amount to sell",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenIn",
+        "showMaxButton": true,
+        "showBalance": true
+      },
+      "onChainValidation": {
+        "abiCall": {
+          "function": "balanceOf",
+          "inlineAbi": [{
+            "name": "balanceOf",
+            "type": "function",
+            "inputs": [{ "name": "account", "type": "address" }],
+            "outputs": [{ "type": "uint256" }]
+          }],
+          "contractFrom": "tokenIn",
+          "argsFrom": ["connectedWallet"]
+        },
+        "condition": "gte",
+        "compareToField": "amountIn",
+        "errorMessage": "Insufficient balance",
+        "debounceMs": 300
+      }
+    }
+  },
+  {
+    "name": "tokenOut",
+    "type": "address",
+    "description": "Token to buy",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "estimatedOut",
+    "type": "uint256",
+    "description": "Estimated output",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenOut"
+      },
+      "computeSource": {
+        "type": "abiCall",
+        "abiCall": {
+          "function": "getAmountOut",
+          "inlineAbi": [{
+            "name": "getAmountOut",
+            "type": "function",
+            "inputs": [
+              { "name": "amountIn", "type": "uint256" },
+              { "name": "reserveIn", "type": "uint256" },
+              { "name": "reserveOut", "type": "uint256" }
+            ],
+            "outputs": [{ "type": "uint256" }]
+          }],
+          "contractFrom": { "literal": "0xRouterAddress" },
+          "argsFrom": ["amountIn", "reserveIn", "reserveOut"]
+        }
+      }
+    }
+  }
+]
+----
+
+== Combining Groups with Computed Fields
+
+[source,json]
+----
+{
+  "arguments": {
+    "groups": [
+      {
+        "id": "input",
+        "title": "Input",
+        "fields": ["tokenIn", "amountIn"]
+      },
+      {
+        "id": "output",
+        "title": "Output",
+        "fields": ["tokenOut", "estimatedOut"]
+      },
+      {
+        "id": "summary",
+        "title": "Transaction Summary",
+        "collapsible": false,
+        "fields": ["priceImpact", "minReceived", "route"]
+      }
+    ],
+    "fields": [
+      // ... field definitions with computed sources
+    ]
+  }
+}
+----
+
+== Next Steps
+
+* <<production-features>>: Add wizards, gas estimation, and transaction preview
+* <<reference>>: Complete schema reference

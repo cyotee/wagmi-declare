@@ -1,0 +1,1025 @@
+[[reference]]
+= Schema Reference
+
+This section provides a complete reference for all schema properties.
+
+== Contract List Structure
+
+A contract list is an array of factory objects:
+
+[source,json]
+----
+[
+  {
+    "chainId": 1,
+    "hookName": "MyFactory",
+    "name": "My Token Factory",
+    "functions": [...]
+  }
+]
+----
+
+=== ContractListFactory
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Required
+
+| `chainId`
+| `number`
+| Blockchain network ID
+| Yes
+
+| `hookName`
+| `string`
+| Internal identifier for your application
+| Yes
+
+| `name`
+| `string`
+| Human-readable display name
+| Yes
+
+| `functions`
+| `ContractListFunctionEntry[]`
+| Array of function definitions
+| Yes
+|===
+
+== Function Entry
+
+Each function entry defines a contract function with its arguments and UI configuration.
+
+[source,json]
+----
+{
+  "functionName": "Display Label",
+  "simulate": true,
+  "arguments": [...],
+  "wizard": {...},
+  "preview": {...},
+  "gasEstimation": {...},
+  "resultStrategies": [...]
+}
+----
+
+=== ContractListFunctionEntry
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Required
+
+| `<functionName>`
+| `string`
+| Function name maps to display label
+| Yes (exactly one)
+
+| `simulate`
+| `boolean`
+| Simulate transaction before execution
+| No
+
+| `arguments`
+| `Argument[] \| ArgumentGroup[]`
+| Function parameters
+| No
+
+| `wizard`
+| `WizardConfig`
+| Multi-step wizard configuration
+| No
+
+| `preview`
+| `PreviewConfig`
+| Transaction preview configuration
+| No
+
+| `gasEstimation`
+| `GasEstimationConfig`
+| Gas estimation display configuration
+| No
+
+| `resultStrategies`
+| `ResultStrategy[]`
+| How to extract/display results
+| No
+|===
+
+== Argument Definition
+
+Arguments define function parameters with UI rendering hints.
+
+=== ContractListArgument
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Required
+
+| `name`
+| `string`
+| Parameter name (matches Solidity)
+| Yes
+
+| `type`
+| `SolidityType`
+| Solidity type
+| Yes
+
+| `description`
+| `string`
+| Human-readable description
+| Yes
+
+| `optional`
+| `boolean`
+| Whether parameter can be omitted
+| No
+
+| `default`
+| `any \| DynamicDefault`
+| Default value (static or dynamic)
+| No
+
+| `ui`
+| `ContractListArgUI`
+| UI configuration
+| No
+
+| `minItems`
+| `number`
+| Minimum array items (for array types)
+| No
+
+| `maxItems`
+| `number`
+| Maximum array items (for array types)
+| No
+
+| `components`
+| `ContractListArgComponent[]`
+| Tuple/struct field definitions
+| No (required for tuple)
+
+| `computed`
+| `boolean`
+| Whether field is computed (read-only)
+| No
+
+| `computeFrom`
+| `ComputeSource`
+| Source for computed value
+| No
+|===
+
+=== Solidity Types
+
+[cols="1,3"]
+|===
+| Type | Description
+
+| `address`
+| Ethereum address (20 bytes)
+
+| `address[]`
+| Array of addresses
+
+| `uint8`
+| 8-bit unsigned integer (0-255)
+
+| `uint256`
+| 256-bit unsigned integer
+
+| `uint256[]`
+| Array of uint256
+
+| `bool`
+| Boolean (true/false)
+
+| `string`
+| UTF-8 string
+
+| `tuple`
+| Struct (requires `components`)
+
+| `tuple[]`
+| Array of structs
+|===
+
+== UI Configuration
+
+=== ContractListArgUI
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `widget`
+| `WidgetType`
+| Input widget type
+
+| `placeholder`
+| `string`
+| Placeholder text
+
+| `helpText`
+| `string`
+| Explanatory tooltip/text
+
+| `helpLink`
+| `string`
+| URL to documentation
+
+| `source`
+| `SourceType`
+| Where options come from
+
+| `sourcePath`
+| `string`
+| Path to data file
+
+| `valueField`
+| `string`
+| Field to use as option value
+
+| `labelField`
+| `string \| object`
+| Field to use as display label
+
+| `filters`
+| `object`
+| Filter criteria for options
+
+| `options`
+| `Option[]`
+| Static options array
+
+| `allowManual`
+| `boolean`
+| Allow manual entry (for select)
+
+| `dependsOn`
+| `string[]`
+| Fields this depends on
+
+| `visibleWhen`
+| `VisibilityCondition`
+| Show/hide condition
+
+| `validation`
+| `Validation`
+| Validation rules
+
+| `display`
+| `Display`
+| Display formatting
+
+| `tokenAmountConfig`
+| `TokenAmountConfig`
+| Token amount widget config
+
+| `datetimeConfig`
+| `DatetimeConfig`
+| Datetime widget config
+
+| `layout`
+| `LayoutHints`
+| Layout positioning
+
+| `i18n`
+| `I18nConfig`
+| Internationalization keys
+
+| `addressBook`
+| `boolean`
+| Enable address book
+|===
+
+=== Widget Types
+
+[cols="1,3"]
+|===
+| Widget | Description
+
+| `address`
+| Ethereum address input with validation
+
+| `text`
+| General text input
+
+| `select`
+| Dropdown selection
+
+| `multiselect`
+| Multiple selection
+
+| `checkbox`
+| Boolean toggle
+
+| `radio`
+| Radio button group
+
+| `slider`
+| Numeric slider
+
+| `tokenAmount`
+| Token amount with decimals handling
+
+| `datetime`
+| Date/time picker for timestamps
+|===
+
+=== Source Types
+
+[cols="1,3"]
+|===
+| Source | Description
+
+| `static`
+| Use inline `options` array
+
+| `tokenlist`
+| Load from token list JSON file
+
+| `contractlist`
+| Load from contract list
+
+| `contractFunction`
+| Fetch from on-chain contract call
+|===
+
+== Dynamic Defaults
+
+=== DynamicDefault
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `source`
+| `'connectedWallet' \| 'field' \| 'contractCall' \| 'env'`
+| Default value source
+
+| `field`
+| `string`
+| Source field name (for `field` source)
+
+| `envVar`
+| `string`
+| Environment variable name (for `env` source)
+
+| `abiCall`
+| `AbiCall`
+| Contract call configuration (for `contractCall` source)
+|===
+
+== Visibility Conditions
+
+=== VisibleWhen
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `field`
+| `string`
+| Field to evaluate
+
+| `condition`
+| `ConditionType`
+| Comparison condition
+
+| `value`
+| `any`
+| Value to compare against (for equals/notEquals)
+
+| `values`
+| `any[]`
+| Values to compare against (for in/notIn)
+|===
+
+=== Condition Types
+
+[cols="1,3"]
+|===
+| Condition | Description
+
+| `equals`
+| Field equals value
+
+| `notEquals`
+| Field does not equal value
+
+| `in`
+| Field is one of values
+
+| `notIn`
+| Field is not one of values
+
+| `exists`
+| Field has any value
+
+| `notExists`
+| Field is empty/undefined
+|===
+
+== Validation
+
+=== Validation Object
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `min`
+| `number`
+| Minimum numeric value
+
+| `max`
+| `number`
+| Maximum numeric value
+
+| `step`
+| `number`
+| Increment step
+
+| `regex`
+| `string`
+| Regular expression pattern
+
+| `errorMessage`
+| `string`
+| Custom error message
+
+| `onChain`
+| `OnChainValidation`
+| On-chain validation
+|===
+
+=== OnChainValidation
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `abiCall`
+| `AbiCall`
+| Contract call to validate
+
+| `condition`
+| `ValidationCondition`
+| Validation condition
+
+| `value`
+| `any`
+| Compare value (static)
+
+| `compareToField`
+| `string`
+| Compare to another field's value
+
+| `values`
+| `any[]`
+| Values for in/notIn
+
+| `errorMessage`
+| `string`
+| Error message on failure
+
+| `debounceMs`
+| `number`
+| Debounce interval in ms
+|===
+
+=== Validation Conditions
+
+[cols="1,3"]
+|===
+| Condition | Description
+
+| `exists`
+| Result is truthy
+
+| `notExists`
+| Result is falsy
+
+| `eq`
+| Equals compareValue
+
+| `neq`
+| Not equals compareValue
+
+| `gt`
+| Greater than compareValue
+
+| `gte`
+| Greater than or equal
+
+| `lt`
+| Less than compareValue
+
+| `lte`
+| Less than or equal
+
+| `in`
+| Result is in compareValues
+
+| `notIn`
+| Result is not in compareValues
+|===
+
+== Display Formatting
+
+=== Display Object
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `unit`
+| `DisplayUnit`
+| Display unit type
+
+| `unitLabel`
+| `string`
+| Custom unit label
+
+| `decimals`
+| `number`
+| Decimal places to show
+|===
+
+=== Display Units
+
+[cols="1,2,1"]
+|===
+| Unit | Description | Conversion
+
+| `wei`
+| Wei (smallest ETH unit)
+| 1
+
+| `gwei`
+| Gwei
+| 10^9
+
+| `ether`
+| Ether
+| 10^18
+
+| `bps`
+| Basis points
+| 1/100 of percent
+
+| `percent`
+| Percentage
+| 1/100
+
+| `seconds`
+| Seconds
+| 1
+
+| `minutes`
+| Minutes
+| 60
+
+| `hours`
+| Hours
+| 3600
+
+| `days`
+| Days
+| 86400
+|===
+
+== Token Amount Configuration
+
+=== TokenAmountConfig
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `tokenFrom`
+| `string`
+| Field containing token address
+| Required
+
+| `showMaxButton`
+| `boolean`
+| Show MAX button
+| `false`
+
+| `showBalance`
+| `boolean`
+| Show user's balance
+| `false`
+
+| `showUsdValue`
+| `boolean`
+| Show USD equivalent
+| `false`
+|===
+
+== Datetime Configuration
+
+=== DatetimeConfig
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `format`
+| `DatetimeFormat`
+| Input format
+| `'datetime'`
+
+| `minDate`
+| `string`
+| Minimum date (`'now'` or custom)
+| None
+
+| `maxDate`
+| `string`
+| Maximum date
+| None
+
+| `defaultOffset`
+| `string`
+| Offset from now (`'+30m'`, `'+1h'`, etc.)
+| None
+|===
+
+== Argument Groups
+
+=== ArgumentGroup
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Required
+
+| `group`
+| `string`
+| Group title/identifier
+| Yes
+
+| `collapsed`
+| `boolean`
+| Start collapsed
+| No
+
+| `description`
+| `string`
+| Group description
+| No
+
+| `fields`
+| `ContractListArgument[]`
+| Fields in this group
+| Yes
+|===
+
+== Computed Fields
+
+=== ComputeSource
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `type`
+| `'abiCall' \| 'expression' \| 'field'`
+| Compute source type
+
+| `abiCall`
+| `AbiCall`
+| On-chain call (for abiCall type)
+
+| `expression`
+| `string`
+| Math expression (for expression type)
+
+| `field`
+| `string`
+| Source field (for field type)
+
+| `transform`
+| `TransformType`
+| Value transform
+
+| `transformDecimals`
+| `number`
+| Decimal places for transform
+|===
+
+== Wizard Configuration
+
+=== WizardConfig
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `steps`
+| `WizardStep[]`
+| Step definitions
+| Required
+
+| `allowSkip`
+| `boolean`
+| Allow skipping steps
+| `false`
+
+| `showProgressBar`
+| `boolean`
+| Show progress indicator
+| `true`
+
+| `showStepNumbers`
+| `boolean`
+| Show step numbers
+| `true`
+|===
+
+=== WizardStep
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Required
+
+| `id`
+| `string`
+| Step identifier
+| Yes
+
+| `title`
+| `string`
+| Step title
+| Yes
+
+| `description`
+| `string`
+| Step description
+| No
+
+| `fields`
+| `string[]`
+| Field names in step
+| No
+
+| `groups`
+| `string[]`
+| Group IDs in step
+| No
+
+| `validationMessage`
+| `string`
+| Validation error message
+| No
+|===
+
+== Preview Configuration
+
+=== PreviewConfig
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `enabled`
+| `boolean`
+| Enable preview
+| `true`
+
+| `showTokenTransfers`
+| `boolean`
+| Show token in/out
+| `true`
+
+| `showStateChanges`
+| `boolean`
+| Show state changes
+| `false`
+
+| `showApprovals`
+| `boolean`
+| Show required approvals
+| `true`
+
+| `simulateOnChain`
+| `boolean`
+| Run on-chain simulation
+| `false`
+
+| `warningThresholds`
+| `object`
+| Warning thresholds
+| None
+|===
+
+== Gas Estimation Configuration
+
+=== GasEstimationConfig
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `enabled`
+| `boolean`
+| Enable gas estimation
+| `true`
+
+| `showInNativeCurrency`
+| `boolean`
+| Show cost in native token
+| `true`
+
+| `showInUsd`
+| `boolean`
+| Show USD equivalent
+| `true`
+
+| `showGasLimit`
+| `boolean`
+| Show gas limit
+| `false`
+
+| `refreshIntervalMs`
+| `number`
+| Refresh interval (ms)
+| `15000`
+
+| `includeApprovalGas`
+| `boolean`
+| Include approval tx gas
+| `false`
+|===
+
+== Layout Hints
+
+=== LayoutHints
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `colSpan`
+| `number`
+| Grid column span (1-12)
+| `12`
+
+| `order`
+| `number`
+| Display order
+| Field index
+
+| `hidden`
+| `boolean`
+| Hide from UI
+| `false`
+
+| `readonly`
+| `boolean`
+| Read-only display
+| `false`
+
+| `emphasis`
+| `'normal' \| 'prominent' \| 'subtle'`
+| Visual emphasis
+| `'normal'`
+|===
+
+== Internationalization
+
+=== I18nConfig
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `labelKey`
+| `string`
+| i18n key for label
+
+| `descriptionKey`
+| `string`
+| i18n key for description
+
+| `placeholderKey`
+| `string`
+| i18n key for placeholder
+
+| `helpTextKey`
+| `string`
+| i18n key for help text
+
+| `errorMessageKey`
+| `string`
+| i18n key for error message
+
+| `namespace`
+| `string`
+| i18n namespace
+|===
+
+== ABI Call Configuration
+
+=== AbiCall
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `function`
+| `string`
+| Function name to call
+
+| `abiPath`
+| `string`
+| Path to ABI JSON file
+
+| `inlineAbi`
+| `object[]`
+| Inline ABI definition
+
+| `argsFrom`
+| `ArgSource[]`
+| Where to get function arguments
+
+| `contractFrom`
+| `ArgSource`
+| Where to get contract address
+|===
+
+=== ArgSource
+
+An argument source can be:
+- `string` - Name of a field to read from
+- `{ "literal": value }` - A literal value
+
+[source,json]
+----
+// From field
+"argsFrom": ["tokenAddress", "amount"]
+
+// Literal value
+"argsFrom": [{ "literal": "0x1234..." }]
+
+// Mixed
+"argsFrom": ["userAddress", { "literal": 1000000 }]
+----
+
+== Result Strategies
+
+=== ResultStrategy Types
+
+[cols="1,3"]
+|===
+| Type | Description
+
+| `simulate`
+| Extract result from transaction simulation
+
+| `event`
+| Extract from emitted event
+
+| `read`
+| Call a read function after execution
+|===
+
+=== Simulate Result
+
+[source,json]
+----
+{
+  "type": "simulate",
+  "label": "Deployed Address",
+  "format": "address",
+  "abiPath": "factory.abi.json"
+}
+----
+
+=== Event Result
+
+[source,json]
+----
+{
+  "type": "event",
+  "name": "TokenCreated",
+  "arg": "tokenAddress",
+  "label": "New Token",
+  "format": "address"
+}
+----
+
+=== Read Result
+
+[source,json]
+----
+{
+  "type": "read",
+  "function": "getLastDeployed",
+  "label": "Deployed Contract",
+  "format": "address"
+}
+----

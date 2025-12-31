@@ -1,0 +1,364 @@
+[[basic-forms]]
+= Basic Form Configuration
+
+This chapter covers the foundational features for building user-friendly forms: placeholders, help text, validation rules, and display formatting.
+
+== Placeholder Text
+
+Placeholders provide hint text shown in empty input fields:
+
+[source,json]
+----
+{
+  "name": "tokenAddress",
+  "type": "address",
+  "description": "Token contract address",
+  "ui": {
+    "widget": "address",
+    "placeholder": "0x..."
+  }
+}
+----
+
+.Placeholder Best Practices
+[TIP]
+====
+* Use placeholders to show expected format, not instructions
+* Keep placeholders short (they may be truncated)
+* Don't repeat the label in the placeholder
+====
+
+== Help Text and Documentation Links
+
+Provide additional context with `helpText` and `helpLink`:
+
+[source,json]
+----
+{
+  "name": "pool",
+  "type": "address",
+  "description": "Liquidity pool address",
+  "ui": {
+    "widget": "select",
+    "helpText": "Select the Uniswap V2 pool you want to provide liquidity to. Only pools with sufficient TVL are shown.",
+    "helpLink": "https://docs.example.com/pools"
+  }
+}
+----
+
+[cols="1,3"]
+|===
+| Property | Purpose
+
+| `helpText`
+| Detailed explanation shown in tooltip or expandable section
+
+| `helpLink`
+| URL to external documentation (opens in new tab)
+|===
+
+== Numeric Validation
+
+For `uint256` and `uint8` fields, set constraints with `validation`:
+
+[source,json]
+----
+{
+  "name": "slippage",
+  "type": "uint256",
+  "description": "Maximum slippage tolerance",
+  "ui": {
+    "widget": "slider",
+    "validation": {
+      "min": 0,
+      "max": 1000,
+      "step": 1,
+      "errorMessage": "Slippage must be between 0 and 1000 basis points"
+    }
+  }
+}
+----
+
+=== Validation Properties
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `min`
+| `number`
+| Minimum allowed value
+
+| `max`
+| `number`
+| Maximum allowed value
+
+| `step`
+| `number`
+| Increment step (e.g., `1` for integers, `0.01` for 2 decimals)
+
+| `errorMessage`
+| `string`
+| Custom message shown when validation fails
+|===
+
+=== Regex Validation
+
+For string fields, use regex patterns:
+
+[source,json]
+----
+{
+  "name": "symbol",
+  "type": "string",
+  "description": "Token symbol",
+  "ui": {
+    "widget": "text",
+    "validation": {
+      "regex": "^[A-Z]{2,6}$",
+      "errorMessage": "Symbol must be 2-6 uppercase letters"
+    }
+  }
+}
+----
+
+== Display Units
+
+Show values with appropriate units using `display`:
+
+[source,json]
+----
+{
+  "name": "fee",
+  "type": "uint256",
+  "description": "Protocol fee",
+  "ui": {
+    "widget": "text",
+    "display": {
+      "unit": "bps",
+      "unitLabel": "basis points",
+      "decimals": 0
+    }
+  }
+}
+----
+
+=== Available Units
+
+[cols="1,2,2"]
+|===
+| Unit | Description | Conversion
+
+| `wei`
+| Wei (smallest ETH unit)
+| 1 wei
+
+| `gwei`
+| Gwei
+| 10^9 wei
+
+| `ether`
+| Ether
+| 10^18 wei
+
+| `bps`
+| Basis points
+| 1/100 of a percent
+
+| `percent`
+| Percentage
+| 1/100
+
+| `seconds`
+| Seconds
+| Time duration
+
+| `minutes`
+| Minutes
+| 60 seconds
+
+| `hours`
+| Hours
+| 3600 seconds
+
+| `days`
+| Days
+| 86400 seconds
+|===
+
+=== Custom Unit Labels
+
+Override the default label with `unitLabel`:
+
+[source,json]
+----
+{
+  "display": {
+    "unit": "bps",
+    "unitLabel": "bp",  // Shorter label
+    "decimals": 0
+  }
+}
+----
+
+== Static Options
+
+For `select` and `radio` widgets, define static options:
+
+[source,json]
+----
+{
+  "name": "vaultType",
+  "type": "string",
+  "description": "Type of vault to deploy",
+  "ui": {
+    "widget": "select",
+    "source": "static",
+    "options": [
+      { "value": "basic", "label": "Basic Vault" },
+      { "value": "strategy", "label": "Strategy Vault" },
+      { "value": "managed", "label": "Managed Vault" }
+    ]
+  }
+}
+----
+
+=== Radio Buttons
+
+Use `radio` widget for 2-4 mutually exclusive options:
+
+[source,json]
+----
+{
+  "name": "direction",
+  "type": "string",
+  "description": "Swap direction",
+  "ui": {
+    "widget": "radio",
+    "source": "static",
+    "options": [
+      { "value": "buy", "label": "Buy" },
+      { "value": "sell", "label": "Sell" }
+    ]
+  }
+}
+----
+
+== Options from Token Lists
+
+Load options from a token list JSON file:
+
+[source,json]
+----
+{
+  "name": "token",
+  "type": "address",
+  "description": "Select token",
+  "ui": {
+    "widget": "select",
+    "source": "tokenlist",
+    "sourcePath": "sepolia-tokens.tokenlist.json",
+    "valueField": "address",
+    "labelField": "symbol",
+    "filters": {
+      "chainId": 11155111
+    }
+  }
+}
+----
+
+=== Token List Properties
+
+[cols="1,1,3"]
+|===
+| Property | Required | Description
+
+| `source`
+| Yes
+| Set to `"tokenlist"`
+
+| `sourcePath`
+| Yes
+| Path to the token list JSON file
+
+| `valueField`
+| No
+| Field to use as option value (default: `"address"`)
+
+| `labelField`
+| No
+| Field to use as display label (default: `"symbol"`)
+
+| `filters`
+| No
+| Object with field-value pairs to filter tokens
+|===
+
+=== Allowing Manual Entry
+
+Let users enter values not in the list:
+
+[source,json]
+----
+{
+  "ui": {
+    "widget": "select",
+    "source": "tokenlist",
+    "sourcePath": "tokens.json",
+    "allowManual": true,
+    "placeholder": "Select or enter address..."
+  }
+}
+----
+
+== Checkbox Inputs
+
+For boolean fields:
+
+[source,json]
+----
+{
+  "name": "useMaxBalance",
+  "type": "bool",
+  "description": "Use maximum available balance",
+  "ui": {
+    "widget": "checkbox"
+  }
+}
+----
+
+== Complete Example
+
+Here's a complete example combining all basic features:
+
+[source,json]
+----
+{
+  "name": "slippageTolerance",
+  "type": "uint256",
+  "description": "Maximum slippage tolerance for swaps",
+  "default": 50,
+  "ui": {
+    "widget": "slider",
+    "placeholder": "50",
+    "helpText": "Higher slippage allows trades to execute in volatile conditions but may result in worse prices. Recommended: 0.5% (50 bps) for stable pairs, 1% (100 bps) for volatile pairs.",
+    "helpLink": "https://docs.example.com/slippage",
+    "validation": {
+      "min": 0,
+      "max": 1000,
+      "step": 1,
+      "errorMessage": "Slippage must be between 0 and 1000 basis points (0-10%)"
+    },
+    "display": {
+      "unit": "bps",
+      "unitLabel": "basis points",
+      "decimals": 0
+    }
+  }
+}
+----
+
+== Next Steps
+
+* <<dynamic-forms>>: Make fields respond to other field values
+* <<defi-inputs>>: Use specialized DeFi widgets

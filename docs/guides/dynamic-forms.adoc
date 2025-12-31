@@ -1,0 +1,403 @@
+[[dynamic-forms]]
+= Dynamic Form Behavior
+
+This chapter covers making forms respond to user input: showing/hiding fields based on conditions and setting defaults dynamically.
+
+== Conditional Visibility
+
+Use `visibleWhen` to show or hide fields based on other field values:
+
+[source,json]
+----
+{
+  "name": "strategyAddress",
+  "type": "address",
+  "description": "Custom strategy contract address",
+  "ui": {
+    "widget": "address",
+    "visibleWhen": {
+      "field": "vaultType",
+      "condition": "equals",
+      "value": "strategy"
+    }
+  }
+}
+----
+
+In this example, `strategyAddress` only appears when `vaultType` is set to `"strategy"`.
+
+=== Visibility Conditions
+
+[cols="1,2,2"]
+|===
+| Condition | Description | Example
+
+| `equals`
+| Field equals a specific value
+| `"value": "strategy"`
+
+| `notEquals`
+| Field does not equal a value
+| `"value": "basic"`
+
+| `in`
+| Field is one of several values
+| `"values": ["a", "b", "c"]`
+
+| `notIn`
+| Field is not one of several values
+| `"values": ["x", "y"]`
+
+| `exists`
+| Field has any non-empty value
+| (no value needed)
+
+| `notExists`
+| Field is empty or undefined
+| (no value needed)
+|===
+
+=== Equals Condition
+
+Show field when another field matches a specific value:
+
+[source,json]
+----
+{
+  "visibleWhen": {
+    "field": "paymentMethod",
+    "condition": "equals",
+    "value": "crypto"
+  }
+}
+----
+
+=== Not Equals Condition
+
+Show field when another field doesn't match:
+
+[source,json]
+----
+{
+  "visibleWhen": {
+    "field": "useDefault",
+    "condition": "notEquals",
+    "value": true
+  }
+}
+----
+
+=== In Condition
+
+Show field when another field matches any value in a list:
+
+[source,json]
+----
+{
+  "visibleWhen": {
+    "field": "protocol",
+    "condition": "in",
+    "values": ["uniswap", "sushiswap", "pancakeswap"]
+  }
+}
+----
+
+=== Exists Condition
+
+Show field when another field has any value:
+
+[source,json]
+----
+{
+  "name": "tokenBAmount",
+  "type": "uint256",
+  "description": "Amount of Token B",
+  "ui": {
+    "widget": "tokenAmount",
+    "visibleWhen": {
+      "field": "tokenB",
+      "condition": "exists"
+    }
+  }
+}
+----
+
+=== Not Exists Condition
+
+Show field when another field is empty:
+
+[source,json]
+----
+{
+  "name": "createNewPool",
+  "type": "bool",
+  "description": "Create a new liquidity pool",
+  "ui": {
+    "widget": "checkbox",
+    "visibleWhen": {
+      "field": "existingPool",
+      "condition": "notExists"
+    }
+  }
+}
+----
+
+== Dynamic Default Values
+
+Instead of static defaults, use `DynamicDefault` to set values from various sources:
+
+=== Connected Wallet
+
+Pre-fill with the user's connected wallet address:
+
+[source,json]
+----
+{
+  "name": "recipient",
+  "type": "address",
+  "description": "Address to receive tokens",
+  "default": {
+    "source": "connectedWallet"
+  }
+}
+----
+
+=== From Another Field
+
+Copy value from another field:
+
+[source,json]
+----
+{
+  "name": "tokenB",
+  "type": "address",
+  "description": "Second token (defaults to first)",
+  "default": {
+    "source": "field",
+    "field": "tokenA"
+  }
+}
+----
+
+=== From Contract Call
+
+Fetch default from an on-chain contract:
+
+[source,json]
+----
+{
+  "name": "currentFee",
+  "type": "uint256",
+  "description": "Current protocol fee",
+  "default": {
+    "source": "contractCall",
+    "abiCall": {
+      "function": "protocolFee",
+      "inlineAbi": [{
+        "name": "protocolFee",
+        "type": "function",
+        "inputs": [],
+        "outputs": [{ "type": "uint256" }]
+      }],
+      "contractFrom": "feeController"
+    }
+  }
+}
+----
+
+=== From Environment Variable
+
+Use an environment variable (useful for testing/development):
+
+[source,json]
+----
+{
+  "name": "adminAddress",
+  "type": "address",
+  "description": "Admin wallet",
+  "default": {
+    "source": "env",
+    "envVar": "ADMIN_ADDRESS"
+  }
+}
+----
+
+=== Default Source Reference
+
+[cols="1,2,2"]
+|===
+| Source | Required Properties | Use Case
+
+| `connectedWallet`
+| None
+| Pre-fill with user's address
+
+| `field`
+| `field`
+| Copy from another input
+
+| `contractCall`
+| `abiCall`
+| Fetch from on-chain state
+
+| `env`
+| `envVar`
+| Development/testing defaults
+|===
+
+== Common Patterns
+
+=== Optional Advanced Settings
+
+Show advanced options only when enabled:
+
+[source,json]
+----
+[
+  {
+    "name": "showAdvanced",
+    "type": "bool",
+    "description": "Show advanced options",
+    "default": false,
+    "ui": { "widget": "checkbox" }
+  },
+  {
+    "name": "customGasPrice",
+    "type": "uint256",
+    "description": "Custom gas price (gwei)",
+    "ui": {
+      "widget": "text",
+      "visibleWhen": {
+        "field": "showAdvanced",
+        "condition": "equals",
+        "value": true
+      }
+    }
+  },
+  {
+    "name": "customNonce",
+    "type": "uint256",
+    "description": "Custom transaction nonce",
+    "ui": {
+      "widget": "text",
+      "visibleWhen": {
+        "field": "showAdvanced",
+        "condition": "equals",
+        "value": true
+      }
+    }
+  }
+]
+----
+
+=== Protocol-Specific Fields
+
+Show different fields based on selected protocol:
+
+[source,json]
+----
+[
+  {
+    "name": "protocol",
+    "type": "string",
+    "description": "DEX Protocol",
+    "ui": {
+      "widget": "select",
+      "source": "static",
+      "options": [
+        { "value": "uniswap", "label": "Uniswap V2" },
+        { "value": "curve", "label": "Curve" },
+        { "value": "balancer", "label": "Balancer" }
+      ]
+    }
+  },
+  {
+    "name": "poolFee",
+    "type": "uint256",
+    "description": "Pool fee tier",
+    "ui": {
+      "widget": "select",
+      "visibleWhen": {
+        "field": "protocol",
+        "condition": "equals",
+        "value": "uniswap"
+      }
+    }
+  },
+  {
+    "name": "curvePoolId",
+    "type": "uint256",
+    "description": "Curve pool index",
+    "ui": {
+      "widget": "text",
+      "visibleWhen": {
+        "field": "protocol",
+        "condition": "equals",
+        "value": "curve"
+      }
+    }
+  },
+  {
+    "name": "balancerPoolId",
+    "type": "string",
+    "description": "Balancer pool ID",
+    "ui": {
+      "widget": "text",
+      "visibleWhen": {
+        "field": "protocol",
+        "condition": "equals",
+        "value": "balancer"
+      }
+    }
+  }
+]
+----
+
+=== Self-Transfer Default
+
+Default to sending tokens to yourself:
+
+[source,json]
+----
+{
+  "name": "recipient",
+  "type": "address",
+  "description": "Recipient address",
+  "default": { "source": "connectedWallet" },
+  "ui": {
+    "widget": "address",
+    "placeholder": "Defaults to your wallet",
+    "helpText": "Leave empty to send to yourself"
+  }
+}
+----
+
+== Dependencies Between Fields
+
+Use `dependsOn` to indicate that one field's options depend on another:
+
+[source,json]
+----
+{
+  "name": "tokenB",
+  "type": "address",
+  "description": "Second token in pair",
+  "ui": {
+    "widget": "select",
+    "source": "contractFunction",
+    "dependsOn": ["tokenA"],
+    "abiCall": {
+      "function": "getValidPairs",
+      "argsFrom": ["tokenA"],
+      "contractFrom": { "literal": "0x..." }
+    }
+  }
+}
+----
+
+WARNING: Avoid circular dependencies. If field A depends on field B, field B should not depend on field A.
+
+== Next Steps
+
+* <<defi-inputs>>: Use specialized widgets for token amounts and timestamps
+* <<complex-forms>>: Organize complex forms with groups and computed fields

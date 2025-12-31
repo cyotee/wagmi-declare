@@ -1,0 +1,701 @@
+[[production-features]]
+= Production Features
+
+This chapter covers features for production-ready DeFi interfaces: multi-step wizards, transaction preview, gas estimation, layout control, and internationalization.
+
+== Multi-Step Wizards
+
+Complex transactions benefit from wizard-style interfaces that guide users through steps:
+
+[source,json]
+----
+{
+  "addLiquidityWithApproval": "Add Liquidity",
+  "wizardConfig": {
+    "steps": [
+      {
+        "id": "selectTokens",
+        "title": "Select Tokens",
+        "description": "Choose the token pair for your liquidity position",
+        "fields": ["tokenA", "tokenB"]
+      },
+      {
+        "id": "enterAmounts",
+        "title": "Enter Amounts",
+        "description": "Specify how much of each token to add",
+        "fields": ["amountA", "amountB"],
+        "validationMessage": "Both amounts must be greater than zero"
+      },
+      {
+        "id": "reviewApprove",
+        "title": "Review & Approve",
+        "description": "Review your transaction and approve token spending",
+        "fields": ["slippage", "deadline"]
+      }
+    ],
+    "allowSkip": false,
+    "showProgressBar": true,
+    "showStepNumbers": true
+  },
+  "arguments": [...]
+}
+----
+
+=== WizardConfig Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `steps`
+| `WizardStep[]`
+| Array of step definitions
+| Required
+
+| `allowSkip`
+| `boolean`
+| Allow users to skip ahead
+| `false`
+
+| `showProgressBar`
+| `boolean`
+| Display progress indicator
+| `true`
+
+| `showStepNumbers`
+| `boolean`
+| Show step numbers (1, 2, 3...)
+| `true`
+|===
+
+=== WizardStep Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `id`
+| `string`
+| Unique step identifier
+| Required
+
+| `title`
+| `string`
+| Step title in progress bar
+| Required
+
+| `description`
+| `string`
+| Explanatory text for the step
+| None
+
+| `fields`
+| `string[]`
+| Field names shown in this step
+| None
+
+| `groups`
+| `string[]`
+| Group IDs shown in this step
+| None
+
+| `validationMessage`
+| `string`
+| Message shown if step validation fails
+| None
+|===
+
+=== Wizard with Groups
+
+Reference argument groups instead of individual fields:
+
+[source,json]
+----
+{
+  "wizardConfig": {
+    "steps": [
+      {
+        "id": "tokenSelection",
+        "title": "Tokens",
+        "groups": ["tokenPairGroup"]
+      },
+      {
+        "id": "amounts",
+        "title": "Amounts",
+        "groups": ["amountsGroup"]
+      },
+      {
+        "id": "settings",
+        "title": "Settings",
+        "groups": ["advancedGroup"]
+      }
+    ]
+  },
+  "arguments": {
+    "groups": [
+      { "id": "tokenPairGroup", "title": "Token Pair", "fields": ["tokenA", "tokenB"] },
+      { "id": "amountsGroup", "title": "Amounts", "fields": ["amountA", "amountB"] },
+      { "id": "advancedGroup", "title": "Advanced", "fields": ["slippage", "deadline"] }
+    ],
+    "fields": [...]
+  }
+}
+----
+
+== Transaction Preview
+
+Show users what will happen before they sign:
+
+[source,json]
+----
+{
+  "swap": "Swap Tokens",
+  "previewConfig": {
+    "showTokenTransfers": true,
+    "showApprovals": true,
+    "showWarnings": true,
+    "warningConditions": [
+      {
+        "field": "slippage",
+        "condition": "gt",
+        "value": 500,
+        "message": "High slippage tolerance may result in unfavorable rates"
+      },
+      {
+        "field": "amountIn",
+        "condition": "gt",
+        "value": "1000000000000000000000",
+        "message": "Large transaction - please verify all details"
+      }
+    ]
+  },
+  "arguments": [...]
+}
+----
+
+=== PreviewConfig Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `showTokenTransfers`
+| `boolean`
+| Display token in/out summary
+| `true`
+
+| `showApprovals`
+| `boolean`
+| Show required token approvals
+| `true`
+
+| `showWarnings`
+| `boolean`
+| Display warning messages
+| `true`
+
+| `warningConditions`
+| `array`
+| Conditions that trigger warnings
+| `[]`
+|===
+
+=== Warning Conditions
+
+[source,json]
+----
+{
+  "warningConditions": [
+    {
+      "field": "recipient",
+      "condition": "neq",
+      "compareToField": "connectedWallet",
+      "message": "Tokens will be sent to a different address"
+    },
+    {
+      "field": "deadline",
+      "condition": "lt",
+      "value": 300,
+      "message": "Short deadline - transaction may fail"
+    }
+  ]
+}
+----
+
+=== Token Transfer Display
+
+When `showTokenTransfers` is enabled, the UI displays:
+
+----
+┌─────────────────────────────────────┐
+│ Transaction Preview                 │
+├─────────────────────────────────────┤
+│ You send:    1,000 USDC             │
+│ You receive: ~0.5 ETH               │
+│                                     │
+│ ⚠️ High slippage tolerance          │
+└─────────────────────────────────────┘
+----
+
+== Gas Estimation
+
+Display estimated transaction costs:
+
+[source,json]
+----
+{
+  "deposit": "Deposit",
+  "gasEstimationConfig": {
+    "enabled": true,
+    "showInNative": true,
+    "showInUsd": true,
+    "refreshInterval": 15000
+  },
+  "arguments": [...]
+}
+----
+
+=== GasEstimationConfig Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `enabled`
+| `boolean`
+| Enable gas estimation display
+| `true`
+
+| `showInNative`
+| `boolean`
+| Show cost in native token (ETH, MATIC, etc.)
+| `true`
+
+| `showInUsd`
+| `boolean`
+| Show USD equivalent
+| `true`
+
+| `refreshInterval`
+| `number`
+| Milliseconds between gas price updates
+| `15000`
+|===
+
+=== Gas Display Example
+
+----
+┌─────────────────────────────────────┐
+│ Estimated Gas                       │
+├─────────────────────────────────────┤
+│ Gas Limit:  150,000                 │
+│ Gas Price:  25 gwei                 │
+│ Cost:       0.00375 ETH (~$12.50)   │
+└─────────────────────────────────────┘
+----
+
+== Layout Hints
+
+Control field positioning in responsive layouts:
+
+[source,json]
+----
+{
+  "name": "tokenA",
+  "type": "address",
+  "description": "First token",
+  "ui": {
+    "widget": "select",
+    "layoutHints": {
+      "colSpan": 6,
+      "order": 1,
+      "emphasis": "prominent"
+    }
+  }
+}
+----
+
+=== LayoutHints Properties
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `colSpan`
+| `number`
+| Column span in 12-column grid (1-12)
+| `12`
+
+| `order`
+| `number`
+| Display order (lower = first)
+| Field index
+
+| `hidden`
+| `boolean`
+| Hide field from UI (still in form data)
+| `false`
+
+| `readonly`
+| `boolean`
+| Display as read-only
+| `false`
+
+| `emphasis`
+| `string`
+| Visual emphasis level
+| `"normal"`
+|===
+
+=== Emphasis Levels
+
+[cols="1,3"]
+|===
+| Level | Visual Treatment
+
+| `prominent`
+| Larger font, primary color, more spacing
+
+| `normal`
+| Standard form field appearance
+
+| `subtle`
+| Smaller font, muted colors
+|===
+
+=== Responsive Grid Layout
+
+[source,json]
+----
+[
+  {
+    "name": "tokenA",
+    "type": "address",
+    "ui": {
+      "widget": "select",
+      "layoutHints": { "colSpan": 6, "order": 1 }
+    }
+  },
+  {
+    "name": "tokenB",
+    "type": "address",
+    "ui": {
+      "widget": "select",
+      "layoutHints": { "colSpan": 6, "order": 2 }
+    }
+  },
+  {
+    "name": "amountA",
+    "type": "uint256",
+    "ui": {
+      "widget": "tokenAmount",
+      "layoutHints": { "colSpan": 6, "order": 3 }
+    }
+  },
+  {
+    "name": "amountB",
+    "type": "uint256",
+    "ui": {
+      "widget": "tokenAmount",
+      "layoutHints": { "colSpan": 6, "order": 4 }
+    }
+  },
+  {
+    "name": "deadline",
+    "type": "uint256",
+    "ui": {
+      "widget": "datetime",
+      "layoutHints": { "colSpan": 12, "order": 5, "emphasis": "subtle" }
+    }
+  }
+]
+----
+
+Results in:
+
+----
+┌────────────────┬────────────────┐
+│ Token A        │ Token B        │  <- colSpan: 6 each
+├────────────────┼────────────────┤
+│ Amount A       │ Amount B       │  <- colSpan: 6 each
+├────────────────┴────────────────┤
+│ Deadline                        │  <- colSpan: 12
+└─────────────────────────────────┘
+----
+
+== Internationalization (i18n)
+
+Support multiple languages with i18n keys:
+
+[source,json]
+----
+{
+  "name": "amount",
+  "type": "uint256",
+  "description": "Amount to deposit",
+  "ui": {
+    "widget": "tokenAmount",
+    "i18nConfig": {
+      "labelKey": "deposit.amount.label",
+      "descriptionKey": "deposit.amount.description",
+      "placeholderKey": "deposit.amount.placeholder",
+      "helpTextKey": "deposit.amount.help",
+      "errorMessageKey": "deposit.amount.error",
+      "namespace": "defi"
+    }
+  }
+}
+----
+
+=== I18nConfig Properties
+
+[cols="1,1,3"]
+|===
+| Property | Type | Description
+
+| `labelKey`
+| `string`
+| Translation key for field label
+
+| `descriptionKey`
+| `string`
+| Translation key for description
+
+| `placeholderKey`
+| `string`
+| Translation key for placeholder
+
+| `helpTextKey`
+| `string`
+| Translation key for help text
+
+| `errorMessageKey`
+| `string`
+| Translation key for error messages
+
+| `namespace`
+| `string`
+| i18n namespace (e.g., "common", "defi")
+|===
+
+=== Integration with i18n Libraries
+
+Your UI implementation uses the keys with your i18n library:
+
+[source,typescript]
+----
+import { useTranslation } from 'react-i18next';
+
+function FieldLabel({ argument }) {
+  const { t } = useTranslation(argument.ui?.i18nConfig?.namespace);
+
+  const labelKey = argument.ui?.i18nConfig?.labelKey;
+  const label = labelKey ? t(labelKey) : argument.description;
+
+  return <label>{label}</label>;
+}
+----
+
+=== Translation File Example
+
+[source,json]
+----
+{
+  "deposit": {
+    "amount": {
+      "label": "Deposit Amount",
+      "description": "Enter the amount you wish to deposit",
+      "placeholder": "0.0",
+      "help": "This amount will be transferred from your wallet to the vault",
+      "error": "Please enter a valid amount"
+    }
+  }
+}
+----
+
+== Address Book Integration
+
+Enable address book lookups for address fields:
+
+[source,json]
+----
+{
+  "name": "recipient",
+  "type": "address",
+  "description": "Recipient address",
+  "ui": {
+    "widget": "address",
+    "addressBook": true,
+    "placeholder": "0x... or select from address book"
+  }
+}
+----
+
+When `addressBook: true`:
+
+* Show saved addresses in a dropdown
+* Allow selecting from recent addresses
+* Display ENS names when available
+* Provide option to save new addresses
+
+== Complete Production Example
+
+[source,json]
+----
+{
+  "swap": "Swap Tokens",
+  "simulate": true,
+  "wizardConfig": {
+    "steps": [
+      {
+        "id": "select",
+        "title": "Select Tokens",
+        "fields": ["tokenIn", "tokenOut"]
+      },
+      {
+        "id": "amount",
+        "title": "Enter Amount",
+        "fields": ["amountIn", "estimatedOut"]
+      },
+      {
+        "id": "review",
+        "title": "Review",
+        "fields": ["slippage", "deadline"]
+      }
+    ],
+    "showProgressBar": true
+  },
+  "previewConfig": {
+    "showTokenTransfers": true,
+    "showApprovals": true,
+    "warningConditions": [
+      {
+        "field": "slippage",
+        "condition": "gt",
+        "value": 300,
+        "message": "High slippage may result in poor execution"
+      }
+    ]
+  },
+  "gasEstimationConfig": {
+    "enabled": true,
+    "showInNative": true,
+    "showInUsd": true
+  },
+  "arguments": [
+    {
+      "name": "tokenIn",
+      "type": "address",
+      "description": "Token to sell",
+      "ui": {
+        "widget": "select",
+        "source": "tokenlist",
+        "sourcePath": "tokens.json",
+        "layoutHints": { "colSpan": 6 },
+        "i18nConfig": {
+          "labelKey": "swap.tokenIn.label",
+          "namespace": "defi"
+        }
+      }
+    },
+    {
+      "name": "tokenOut",
+      "type": "address",
+      "description": "Token to buy",
+      "ui": {
+        "widget": "select",
+        "source": "tokenlist",
+        "sourcePath": "tokens.json",
+        "layoutHints": { "colSpan": 6 },
+        "i18nConfig": {
+          "labelKey": "swap.tokenOut.label",
+          "namespace": "defi"
+        }
+      }
+    },
+    {
+      "name": "amountIn",
+      "type": "uint256",
+      "description": "Amount to sell",
+      "ui": {
+        "widget": "tokenAmount",
+        "tokenAmountConfig": {
+          "tokenFrom": "tokenIn",
+          "showMaxButton": true,
+          "showBalance": true,
+          "showUsdValue": true
+        },
+        "layoutHints": { "colSpan": 12, "emphasis": "prominent" },
+        "onChainValidation": {
+          "abiCall": {
+            "function": "balanceOf",
+            "inlineAbi": [{
+              "name": "balanceOf",
+              "type": "function",
+              "inputs": [{ "name": "account", "type": "address" }],
+              "outputs": [{ "type": "uint256" }]
+            }],
+            "contractFrom": "tokenIn",
+            "argsFrom": ["connectedWallet"]
+          },
+          "condition": "gte",
+          "compareToField": "amountIn",
+          "errorMessage": "Insufficient balance",
+          "debounceMs": 300
+        }
+      }
+    },
+    {
+      "name": "estimatedOut",
+      "type": "uint256",
+      "description": "Estimated output",
+      "ui": {
+        "widget": "tokenAmount",
+        "tokenAmountConfig": {
+          "tokenFrom": "tokenOut",
+          "showUsdValue": true
+        },
+        "layoutHints": { "readonly": true },
+        "computeSource": {
+          "type": "abiCall",
+          "abiCall": {
+            "function": "getAmountsOut",
+            "contractFrom": { "literal": "0xRouterAddress" },
+            "argsFrom": ["amountIn", "path"]
+          }
+        }
+      }
+    },
+    {
+      "name": "slippage",
+      "type": "uint256",
+      "description": "Slippage tolerance",
+      "default": 50,
+      "ui": {
+        "widget": "slider",
+        "validation": { "min": 0, "max": 1000 },
+        "display": { "unit": "bps" },
+        "layoutHints": { "colSpan": 6, "emphasis": "subtle" }
+      }
+    },
+    {
+      "name": "deadline",
+      "type": "uint256",
+      "description": "Transaction deadline",
+      "ui": {
+        "widget": "datetime",
+        "datetimeConfig": {
+          "format": "relative",
+          "defaultOffset": "+30m"
+        },
+        "layoutHints": { "colSpan": 6, "emphasis": "subtle" }
+      }
+    }
+  ]
+}
+----
+
+== Next Steps
+
+* <<reference>>: Complete schema reference for all types
+* <<examples>>: More example contract lists

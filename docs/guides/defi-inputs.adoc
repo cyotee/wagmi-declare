@@ -1,0 +1,396 @@
+[[defi-inputs]]
+= DeFi-Specific Inputs
+
+This chapter covers specialized widgets designed for common DeFi interactions: token amounts with decimal handling, and datetime inputs for deadlines and schedules.
+
+== Token Amount Widget
+
+The `tokenAmount` widget is the most common input in DeFi applications. It handles:
+
+* Token decimal conversion (18 decimals, 6 decimals, etc.)
+* Balance display
+* MAX button for using full balance
+* USD value display
+
+=== Basic Usage
+
+[source,json]
+----
+{
+  "name": "amount",
+  "type": "uint256",
+  "description": "Amount to deposit",
+  "ui": {
+    "widget": "tokenAmount",
+    "tokenAmountConfig": {
+      "tokenFrom": "selectedToken"
+    }
+  }
+}
+----
+
+The `tokenFrom` property specifies which field contains the token address. This allows the widget to:
+
+1. Look up the token's decimals
+2. Show the user's balance of that token
+3. Convert the display value to/from raw uint256
+
+=== Full Configuration
+
+[source,json]
+----
+{
+  "name": "depositAmount",
+  "type": "uint256",
+  "description": "Amount of tokens to deposit",
+  "ui": {
+    "widget": "tokenAmount",
+    "placeholder": "0.0",
+    "helpText": "Enter the amount to deposit. Click MAX to use your full balance.",
+    "tokenAmountConfig": {
+      "tokenFrom": "depositToken",
+      "showMaxButton": true,
+      "showUsdValue": true,
+      "showBalance": true
+    }
+  }
+}
+----
+
+=== Token Amount Config Options
+
+[cols="1,1,2,1"]
+|===
+| Property | Type | Description | Default
+
+| `tokenFrom`
+| `string`
+| Field name containing the token address
+| Required
+
+| `showMaxButton`
+| `boolean`
+| Show button to set maximum balance
+| `false`
+
+| `showUsdValue`
+| `boolean`
+| Show USD equivalent value
+| `false`
+
+| `showBalance`
+| `boolean`
+| Show user's token balance
+| `false`
+|===
+
+=== Example: Swap Interface
+
+[source,json]
+----
+[
+  {
+    "name": "tokenIn",
+    "type": "address",
+    "description": "Token to sell",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "amountIn",
+    "type": "uint256",
+    "description": "Amount to sell",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenIn",
+        "showMaxButton": true,
+        "showBalance": true,
+        "showUsdValue": true
+      }
+    }
+  },
+  {
+    "name": "tokenOut",
+    "type": "address",
+    "description": "Token to buy",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "minAmountOut",
+    "type": "uint256",
+    "description": "Minimum amount to receive",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenOut",
+        "showUsdValue": true
+      },
+      "helpText": "Transaction reverts if you receive less than this amount"
+    }
+  }
+]
+----
+
+== Datetime Widget
+
+The `datetime` widget handles timestamp inputs for deadlines, vesting schedules, and time-locked operations.
+
+=== Basic Usage
+
+[source,json]
+----
+{
+  "name": "deadline",
+  "type": "uint256",
+  "description": "Transaction deadline",
+  "ui": {
+    "widget": "datetime",
+    "datetimeConfig": {
+      "format": "relative",
+      "minDate": "now",
+      "defaultOffset": "+30m"
+    }
+  }
+}
+----
+
+=== Datetime Config Options
+
+[cols="1,1,3,1"]
+|===
+| Property | Type | Description | Default
+
+| `format`
+| `string`
+| Display format (see below)
+| `"datetime"`
+
+| `minDate`
+| `string`
+| Minimum selectable date
+| None
+
+| `maxDate`
+| `string`
+| Maximum selectable date
+| None
+
+| `defaultOffset`
+| `string`
+| Default offset from now
+| None
+|===
+
+=== Format Options
+
+[cols="1,3"]
+|===
+| Format | Description
+
+| `timestamp`
+| Raw Unix timestamp input
+
+| `relative`
+| Relative time selector (e.g., "+30 minutes", "+1 hour")
+
+| `datetime`
+| Full date and time picker
+
+| `date`
+| Date only (no time)
+
+| `time`
+| Time only (no date)
+|===
+
+=== Offset Syntax
+
+The `defaultOffset` and relative date constraints use this syntax:
+
+[cols="1,2,2"]
+|===
+| Suffix | Meaning | Example
+
+| `m`
+| Minutes
+| `"+30m"` = 30 minutes from now
+
+| `h`
+| Hours
+| `"+1h"` = 1 hour from now
+
+| `d`
+| Days
+| `"+7d"` = 7 days from now
+
+| `w`
+| Weeks
+| `"+2w"` = 2 weeks from now
+|===
+
+=== Example: Transaction Deadline
+
+[source,json]
+----
+{
+  "name": "deadline",
+  "type": "uint256",
+  "description": "Transaction deadline",
+  "ui": {
+    "widget": "datetime",
+    "helpText": "Transaction will revert if not executed before this time.",
+    "datetimeConfig": {
+      "format": "relative",
+      "minDate": "now",
+      "defaultOffset": "+30m"
+    }
+  }
+}
+----
+
+=== Example: Vesting Schedule
+
+[source,json]
+----
+[
+  {
+    "name": "vestingStart",
+    "type": "uint256",
+    "description": "Vesting start date",
+    "ui": {
+      "widget": "datetime",
+      "datetimeConfig": {
+        "format": "datetime",
+        "minDate": "now"
+      }
+    }
+  },
+  {
+    "name": "cliffDuration",
+    "type": "uint256",
+    "description": "Cliff period",
+    "ui": {
+      "widget": "datetime",
+      "datetimeConfig": {
+        "format": "relative",
+        "defaultOffset": "+180d"
+      },
+      "helpText": "No tokens vest until after the cliff period"
+    }
+  },
+  {
+    "name": "vestingDuration",
+    "type": "uint256",
+    "description": "Total vesting duration",
+    "ui": {
+      "widget": "datetime",
+      "datetimeConfig": {
+        "format": "relative",
+        "defaultOffset": "+365d"
+      }
+    }
+  }
+]
+----
+
+=== Example: Lock Period
+
+[source,json]
+----
+{
+  "name": "unlockTime",
+  "type": "uint256",
+  "description": "Token unlock date",
+  "ui": {
+    "widget": "datetime",
+    "datetimeConfig": {
+      "format": "datetime",
+      "minDate": "now",
+      "defaultOffset": "+30d"
+    },
+    "helpText": "Tokens will be locked until this date"
+  }
+}
+----
+
+== Combining Token and Time Inputs
+
+A complete liquidity provision example:
+
+[source,json]
+----
+[
+  {
+    "name": "tokenA",
+    "type": "address",
+    "description": "First token",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "amountA",
+    "type": "uint256",
+    "description": "Amount of first token",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenA",
+        "showMaxButton": true,
+        "showBalance": true
+      }
+    }
+  },
+  {
+    "name": "tokenB",
+    "type": "address",
+    "description": "Second token",
+    "ui": {
+      "widget": "select",
+      "source": "tokenlist",
+      "sourcePath": "tokens.json"
+    }
+  },
+  {
+    "name": "amountB",
+    "type": "uint256",
+    "description": "Amount of second token",
+    "ui": {
+      "widget": "tokenAmount",
+      "tokenAmountConfig": {
+        "tokenFrom": "tokenB",
+        "showMaxButton": true,
+        "showBalance": true
+      }
+    }
+  },
+  {
+    "name": "deadline",
+    "type": "uint256",
+    "description": "Transaction deadline",
+    "ui": {
+      "widget": "datetime",
+      "datetimeConfig": {
+        "format": "relative",
+        "minDate": "now",
+        "defaultOffset": "+20m"
+      }
+    }
+  }
+]
+----
+
+== Next Steps
+
+* <<complex-forms>>: Organize fields into groups and add computed values
+* <<production-features>>: Add wizards, gas estimation, and more
