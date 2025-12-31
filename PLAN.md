@@ -1,8 +1,8 @@
 # wagmi-declare Development Plan
 
-## Current Status: Phase 2 Complete
+## Current Status: Phase 3 Complete
 
-Build and tests passing. Phases 1-2 implemented.
+Build and tests passing. Phases 1-3 implemented.
 
 ---
 
@@ -47,21 +47,22 @@ Build and tests passing. Phases 1-2 implemented.
   }
   ```
 
-### Phase 3: Dynamic Behavior
+### Phase 3: Dynamic Behavior ✅
 *Enable responsive forms*
 
-- [ ] **Conditional Visibility**
+- [x] **Conditional Visibility**
   - Show/hide fields based on other field values
-  - Currently `dependsOn` only affects data loading, not visibility
+  - Conditions: equals, notEquals, in, notIn, exists, notExists
   ```json
   "visibleWhen": {
     "field": "vaultType",
-    "equals": "strategy"
+    "condition": "equals",
+    "value": "strategy"
   }
   ```
 
-- [ ] **Default Value Sources**
-  - Dynamic defaults from connected wallet, contract calls, or other fields
+- [x] **Default Value Sources**
+  - Dynamic defaults from connected wallet, contract calls, other fields, or env vars
   ```json
   "default": {
     "source": "connectedWallet"

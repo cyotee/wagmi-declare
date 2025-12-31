@@ -9,6 +9,20 @@
         "simulate": true,
         "arguments": [
           {
+            "name": "vaultType",
+            "type": "string",
+            "description": "Type of vault to deploy",
+            "ui": {
+              "widget": "select",
+              "source": "static",
+              "options": [
+                { "value": "basic", "label": "Basic Vault" },
+                { "value": "strategy", "label": "Strategy Vault" }
+              ],
+              "helpText": "Basic vaults are simpler, strategy vaults allow custom logic."
+            }
+          },
+          {
             "name": "pool",
             "type": "address",
             "description": "Address of an existing Uniswap V2 liquidity pool",
@@ -21,8 +35,34 @@
               "filters": { "chainId": 11155111 },
               "allowManual": true,
               "placeholder": "Select a pool or enter address...",
-              "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for. The vault will manage LP positions in this pool.",
+              "helpText": "Choose an existing Uniswap V2 liquidity pool to deploy a vault for.",
               "helpLink": "https://docs.indexedex.app/vaults/uniswap-v2"
+            }
+          },
+          {
+            "name": "strategyAddress",
+            "type": "address",
+            "description": "Custom strategy contract address",
+            "ui": {
+              "widget": "address",
+              "placeholder": "0x...",
+              "helpText": "Address of your custom strategy contract.",
+              "visibleWhen": {
+                "field": "vaultType",
+                "condition": "equals",
+                "value": "strategy"
+              }
+            }
+          },
+          {
+            "name": "recipient",
+            "type": "address",
+            "description": "Address to receive vault tokens",
+            "default": { "source": "connectedWallet" },
+            "ui": {
+              "widget": "address",
+              "placeholder": "Defaults to connected wallet",
+              "helpText": "Leave empty to use your connected wallet address."
             }
           },
           {
@@ -32,7 +72,7 @@
             "ui": {
               "widget": "slider",
               "placeholder": "50",
-              "helpText": "Set the maximum allowed slippage for swap operations. Higher values allow more price movement but may result in worse execution.",
+              "helpText": "Set the maximum allowed slippage for swap operations.",
               "validation": {
                 "min": 0,
                 "max": 1000,

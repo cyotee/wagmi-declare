@@ -15,6 +15,12 @@ export type ContractListArgUI = {
     filters?: Record<string, unknown>;
     options?: Array<{ value: any; label: string }>;
     dependsOn?: string[];
+    visibleWhen?: {
+        field: string;
+        condition: 'equals' | 'notEquals' | 'in' | 'notIn' | 'exists' | 'notExists';
+        value?: any;
+        values?: any[];
+    };
     hook?: { name: string; argsFrom?: ArgSource[] };
     abiCall?: {
         abiPath?: string;
@@ -38,12 +44,19 @@ export type ContractListArgUI = {
     };
 };
 
+export type DynamicDefault = {
+    source: 'connectedWallet' | 'field' | 'contractCall' | 'env';
+    field?: string;
+    envVar?: string;
+    abiCall?: ContractListArgUI['abiCall'];
+};
+
 export type ContractListArgComponent = {
     name: string;
     type: 'address' | 'address[]' | 'uint8' | 'uint256' | 'uint256[]' | 'bool' | 'string';
     description: string;
     optional?: boolean;
-    default?: string | number | boolean | any[] | null;
+    default?: string | number | boolean | any[] | null | DynamicDefault;
     ui?: ContractListArgUI;
 };
 

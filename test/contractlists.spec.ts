@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptionsFromUI, createTokenGetters, resolveLabel, type ContractListArgUI } from '../src'
+import { buildOptionsFromUI, createTokenGetters, resolveLabel, type ContractListArgUI, type ContractListArgComponent, type DynamicDefault } from '../src'
 import { validateContractList } from '../src/validator'
 
 describe('ContractListArgUI type', () => {
@@ -43,9 +43,108 @@ describe('ContractListArgUI type', () => {
     expect(ui.display?.unitLabel).toBe('basis points')
     expect(ui.display?.decimals).toBe(0)
   })
+
+  it('supports conditional visibility', () => {
+    const ui: ContractListArgUI = {
+      widget: 'text',
+      visibleWhen: {
+        field: 'vaultType',
+        condition: 'equals',
+        value: 'strategy'
+      }
+    }
+    expect(ui.visibleWhen?.field).toBe('vaultType')
+    expect(ui.visibleWhen?.condition).toBe('equals')
+    expect(ui.visibleWhen?.value).toBe('strategy')
+  })
+
+  it('supports visibleWhen with in condition', () => {
+    const ui: ContractListArgUI = {
+      widget: 'select',
+      visibleWhen: {
+        field: 'protocol',
+        condition: 'in',
+        values: ['uniswap', 'sushiswap', 'balancer']
+      }
+    }
+    expect(ui.visibleWhen?.condition).toBe('in')
+    expect(ui.visibleWhen?.values).toContain('uniswap')
+  })
+})
+
+describe('DynamicDefault type', () => {
+  it('supports connectedWallet source', () => {
+    const arg: ContractListArgComponent = {
+      name: 'recipient',
+      type: 'address',
+      description: 'Recipient address',
+      default: { source: 'connectedWallet' }
+    }
+    const defaultVal = arg.default as DynamicDefault
+    expect(defaultVal.source).toBe('connectedWallet')
+  })
+
+  it('supports field source', () => {
+    const arg: ContractListArgComponent = {
+      name: 'tokenB',
+      type: 'address',
+      description: 'Second token',
+      default: { source: 'field', field: 'tokenA' }
+    }
+    const defaultVal = arg.default as DynamicDefault
+    expect(defaultVal.source).toBe('field')
+    expect(defaultVal.field).toBe('tokenA')
+  })
 })
 
 describe('schema validation', () => {
+  it('validates contractlist with visibleWhen and dynamic defaults', () => {
+    const contractlist = [{
+      chainId: 11155111,
+      hookName: 'TestFactory',
+      name: 'Test Factory',
+      functions: [{
+        testFunc: 'Test Function',
+        arguments: [
+          {
+            name: 'vaultType',
+            type: 'string',
+            description: 'Type of vault',
+            ui: {
+              widget: 'select',
+              source: 'static',
+              options: [
+                { value: 'basic', label: 'Basic Vault' },
+                { value: 'strategy', label: 'Strategy Vault' }
+              ]
+            }
+          },
+          {
+            name: 'strategyAddress',
+            type: 'address',
+            description: 'Strategy contract address',
+            ui: {
+              widget: 'address',
+              visibleWhen: {
+                field: 'vaultType',
+                condition: 'equals',
+                value: 'strategy'
+              }
+            }
+          },
+          {
+            name: 'recipient',
+            type: 'address',
+            description: 'Recipient address',
+            default: { source: 'connectedWallet' }
+          }
+        ]
+      }]
+    }]
+    const result = validateContractList(contractlist)
+    expect(result.valid).toBe(true)
+  })
+
   it('validates contractlist with numeric constraints and display units', () => {
     const contractlist = [{
       chainId: 11155111,

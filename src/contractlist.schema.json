@@ -105,9 +105,33 @@
                         },
                         {
                             "type": "null"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "source": {
+                                    "type": "string",
+                                    "enum": ["connectedWallet", "field", "contractCall", "env"],
+                                    "description": "Source type for dynamic default value."
+                                },
+                                "field": {
+                                    "type": "string",
+                                    "description": "Field name to copy value from (when source is 'field')."
+                                },
+                                "envVar": {
+                                    "type": "string",
+                                    "description": "Environment variable name (when source is 'env')."
+                                },
+                                "abiCall": {
+                                    "$ref": "#/$defs/ui/properties/abiCall",
+                                    "description": "Contract call to get default value (when source is 'contractCall')."
+                                }
+                            },
+                            "required": ["source"],
+                            "description": "Dynamic default value from external source."
                         }
                     ],
-                    "description": "Default value matching the type (e.g., string for address, number for uint8, boolean for bool, array for [] types)."
+                    "description": "Default value - can be static or dynamic from sources like connected wallet, other fields, or contract calls."
                 },
                 "minItems": {
                     "type": "integer",
@@ -488,6 +512,29 @@
                         "type": "string"
                     },
                     "description": "Argument names this UI depends on (e.g., for dynamic loading). Ensure no cycles."
+                },
+                "visibleWhen": {
+                    "type": "object",
+                    "properties": {
+                        "field": {
+                            "type": "string",
+                            "description": "Name of the field to check."
+                        },
+                        "condition": {
+                            "type": "string",
+                            "enum": ["equals", "notEquals", "in", "notIn", "exists", "notExists"],
+                            "description": "Condition type for visibility check."
+                        },
+                        "value": {
+                            "description": "Value to compare against (not used for exists/notExists)."
+                        },
+                        "values": {
+                            "type": "array",
+                            "description": "Array of values for in/notIn conditions."
+                        }
+                    },
+                    "required": ["field", "condition"],
+                    "description": "Conditional visibility based on another field's value."
                 },
                 "hook": {
                     "type": "object",
