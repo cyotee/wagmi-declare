@@ -1,0 +1,109 @@
+= @daosys/wagmi-declare
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+:source-highlighter: highlight.js
+:experimental:
+
+// Document metadata
+:author: IndexedEx Team
+:revnumber: 1.0
+:revdate: 2024-12-31
+
+A lightweight, framework-agnostic TypeScript library for building dynamic UI components from contract list schemas. Transform contract factory definitions and token lists into typed option lists that React/Vue/Svelte applications can consume for building form controls.
+
+Part of the IndexedEx DeFi ecosystem.
+
+== Installation
+
+[source,bash]
+----
+npm install @daosys/wagmi-declare
+----
+
+Peer dependencies:
+
+[source,bash]
+----
+npm install wagmi viem react
+----
+
+== Quick Example
+
+[source,typescript]
+----
+import {
+  getFactories,
+  getFactoryFunctions,
+  buildOptionsFromUI
+} from '@daosys/wagmi-declare';
+
+// Load your contract list
+import contractList from './my-contracts.contractlist.json';
+
+// Filter by chain
+const mainnetFactories = getFactories(contractList, 1);
+
+// Get function details
+const functions = getFactoryFunctions(mainnetFactories[0]);
+
+// Build dropdown options
+const tokenOptions = buildOptionsFromUI(functions[0].args[0].ui, tokenGetters);
+----
+
+'''
+
+[preface]
+== About This Guide
+
+This guide documents the Contract List schema used by `@daosys/wagmi-declare` to generate dynamic UI forms for DeFi smart contract interactions. The schema allows you to declaratively define how contract functions should be presented to users, including input validation, dynamic behavior, and production-ready features like multi-step wizards and gas estimation.
+
+=== Who Should Read This
+
+* **DeFi developers** building frontends for smart contracts
+* **Protocol teams** wanting to provide better UX for their contracts
+* **Tool builders** integrating contract list schemas into their applications
+
+=== How to Use This Guide
+
+[horizontal]
+New to contract lists?:: Start with <<getting-started>>
+Building basic forms?:: Read <<basic-forms>> and <<dynamic-forms>>
+Need DeFi-specific inputs?:: See <<defi-inputs>>
+Building complex UIs?:: Check <<complex-forms>> and <<production-features>>
+Looking up a specific feature?:: Use the <<reference>> section
+
+'''
+
+include::docs/getting-started.adoc[leveloffset=+1]
+
+include::docs/guides/basic-forms.adoc[leveloffset=+1]
+
+include::docs/guides/dynamic-forms.adoc[leveloffset=+1]
+
+include::docs/guides/defi-inputs.adoc[leveloffset=+1]
+
+include::docs/guides/complex-forms.adoc[leveloffset=+1]
+
+include::docs/guides/production-features.adoc[leveloffset=+1]
+
+include::docs/reference/schema-reference.adoc[leveloffset=+1]
+
+include::docs/reference/types.adoc[leveloffset=+1]
+
+include::docs/reference/helpers.adoc[leveloffset=+1]
+
+[appendix]
+include::docs/examples/examples.adoc[leveloffset=+1]
+
+[appendix]
+== License
+
+MIT License - see LICENSE file for details.
+
+[appendix]
+== Contributing
+
+Contributions are welcome! Please see the project repository for guidelines.
