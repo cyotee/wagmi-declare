@@ -1,55 +1,135 @@
-# Fix Project Plan
+# wagmi-declare Development Plan
 
-## Status: Complete (pending commit)
+## Current Status: Stable
 
-### Tasks
+Build and tests passing. Ready for schema improvements.
 
-- [x] **1. Install Dependencies**
-  - Ran `npm install` - 502 packages installed
+---
 
-- [x] **2. Fix tsconfig.json**
-  - Moved `resolveJsonModule: true` inside `compilerOptions`
-  - Removed duplicate `esModuleInterop` at root level
-  - Added `moduleResolution: "node"` to `compilerOptions`
+## Proposed Schema Improvements
 
-- [x] **3. Fix src/hooks.tsx Type Errors**
-  - Captured `abiCall` in a local const (`call`) after the early return guard
-  - This allows TypeScript to narrow the type inside the async `run()` function
+### High Priority
 
-- [x] **4. Fix src/validator.ts**
-  - Changed `import Ajv from 'ajv'` to `import Ajv2020 from 'ajv/dist/2020'`
-  - Required for JSON Schema 2020-12 support
+- [ ] **Token Amount Widget**
+  - New widget type for DeFi's most common input
+  - Support for token decimals, "MAX" button, USD conversion
+  - Reference token address from another field
+  ```json
+  "widget": "tokenAmount",
+  "tokenFrom": "tokenAddress",
+  "showUsdValue": true,
+  "showMaxButton": true
+  ```
 
-- [x] **5. Fix contractlist.schema.json**
-  - Updated patternProperties regex from `^[a-zA-Z0-9]+$` to `^(?!simulate$|resultStrategies$|arguments$)[a-zA-Z0-9]+$`
-  - Prevents pattern from matching reserved property names
+- [ ] **Conditional Visibility**
+  - Show/hide fields based on other field values
+  - Currently `dependsOn` only affects data loading, not visibility
+  ```json
+  "visibleWhen": {
+    "field": "vaultType",
+    "equals": "strategy"
+  }
+  ```
 
-- [x] **6. Add vitest.config.ts**
-  - Created config file for vitest (replaces deprecated CLI options)
-  - Updated package.json test scripts
+- [ ] **Numeric Constraints**
+  - Min, max, step for uint256/uint8 fields
+  - Unit display (wei/gwei/ether, basis points, percentages)
+  ```json
+  "validation": {
+    "min": 0,
+    "max": 10000,
+    "step": 1
+  },
+  "display": {
+    "unit": "bps",
+    "unitLabel": "basis points"
+  }
+  ```
 
-- [x] **7. Verify Build**
-  - `npm run build` - passes with no errors
+- [ ] **Default Value Sources**
+  - Dynamic defaults from connected wallet, contract calls, or other fields
+  ```json
+  "default": {
+    "source": "connectedWallet"
+  }
+  ```
 
-- [x] **8. Verify Tests**
-  - `npm test` - 5/5 tests pass
+- [ ] **Async Validation**
+  - Validate against on-chain state
+  - Check if address is valid ERC20, if pool exists, etc.
+  ```json
+  "validation": {
+    "onChain": {
+      "abiCall": { "function": "balanceOf", "..." },
+      "condition": "gt",
+      "value": 0,
+      "errorMessage": "Token must have balance"
+    }
+  }
+  ```
 
-- [ ] **9. Commit Changes**
-  - New files to add:
-    - `bin/` - CLI validation tool
-    - `examples/` - Example usage
-    - `test/` - Test suite
-    - `src/hooks.tsx` - React hook
-    - `src/validator.ts` - Schema validator
-    - `vitest.config.ts` - Test config
-    - `CLAUDE.md` - Claude Code guidance
-    - `PLAN.md` - This file
-  - Modified files:
-    - `README.md`
-    - `package.json`
-    - `tsconfig.json`
-    - `src/contractlists.ts`
-    - `src/index.ts`
-    - `src/tokenlists.ts`
-    - `src/contractlist.schema.json`
-    - `src/addresses/sepolia/sepolia-factories.contractlist.json`
+### Medium Priority
+
+- [ ] **Field Groups / Sections**
+  - Organize complex forms into collapsible sections
+  ```json
+  "arguments": [
+    { "group": "Basic Settings", "fields": [...] },
+    { "group": "Advanced", "collapsed": true, "fields": [...] }
+  ]
+  ```
+
+- [ ] **Placeholder Text**
+  - Hint text for empty text/address inputs
+  ```json
+  "ui": {
+    "placeholder": "0x..."
+  }
+  ```
+
+- [ ] **Help Text / Tooltips**
+  - Detailed help separate from description
+  - Optional link to documentation
+  ```json
+  "ui": {
+    "helpText": "Select the pool for liquidity",
+    "helpLink": "https://docs.example.com/pools"
+  }
+  ```
+
+- [ ] **Date/Time Widget**
+  - For timestamp fields (deadlines, vesting schedules)
+  - Relative display option ("in 7 days")
+  ```json
+  "widget": "datetime",
+  "display": { "format": "relative" }
+  ```
+
+- [ ] **Read-Only / Computed Fields**
+  - Display values computed from other fields or contract state
+  ```json
+  "computed": true,
+  "computeFrom": {
+    "abiCall": { "..." }
+  }
+  ```
+
+### Lower Priority
+
+- [ ] **Multi-step Wizard** - Break complex deployments into steps
+- [ ] **Transaction Preview** - Show what will happen before signing
+- [ ] **Gas Estimation** - Display estimated transaction cost
+- [ ] **Address Book** - Save/load frequently used addresses
+- [ ] **Layout Hints** - Column spans, field ordering priority
+- [ ] **i18n Support** - Multi-language labels and descriptions
+
+---
+
+## Implementation Notes
+
+Each schema addition requires:
+1. Update `contractlist.schema.json` with new properties
+2. Update TypeScript types in `contractlists.ts`
+3. Add helper functions if needed
+4. Update tests
+5. Update examples
