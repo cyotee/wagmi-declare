@@ -53,6 +53,16 @@ const functions = getFactoryFunctions(mainnetFactories[0]);
 const tokenOptions = buildOptionsFromUI(functions[0].args[0].ui, tokenGetters);
 ----
 
+== CLI
+
+Because this package is scoped, the most reliable `npx` invocation is:
+
+[source,bash]
+----
+npx --package @daosys/wagmi-declare wagmi-declare generate --abi ./MyContract.abi.json --chain-id 1 --name "My Contract"
+npx --package @daosys/wagmi-declare wagmi-declare validate --file ./my.contractlist.json
+----
+
 '''
 
 [preface]

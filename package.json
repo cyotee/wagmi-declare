@@ -2,23 +2,36 @@
   "name": "@daosys/wagmi-declare",
   "version": "0.1.0",
   "description": "Lightweight helpers and types to build UIs from contract-list schemas (framework-agnostic)",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "bin": {
-    "wagmi-declare": "./bin/generate-contractlist.mjs"
+    "wagmi-declare": "./dist/cli.mjs"
   },
   "files": [
     "dist",
-    "bin"
+    "README.adoc",
+    "docs",
+    "examples"
   ],
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsup",
     "clean": "rm -rf dist",
+    "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate": "node ./bin/validate-contractlist.mjs",
-    "generate": "node ./bin/generate-contractlist.mjs"
+    "validate": "node ./dist/cli.mjs validate",
+    "generate": "node ./dist/cli.mjs generate",
+    "smoke:cli": "node ./dist/cli.mjs --help",
+    "prepublishOnly": "npm run clean && npm run build && npm test && npm run smoke:cli"
   },
   "author": "indexedex",
   "license": "MIT",
@@ -29,11 +42,14 @@
   },
   "devDependencies": {
     "typescript": "^5.0.0",
+    "tsup": "^8.0.0",
+    "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "vitest": "^1.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/jest-dom": "^6.0.0",
     "jsdom": "^22.0.0",
-    "ajv": "^8.12.0"
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1"
   }
 }

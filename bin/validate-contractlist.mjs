@@ -1,11 +1,8 @@
 #!/usr/bin/env node
 import fs from 'fs'
 import path from 'path'
+import { spawnSync } from 'child_process'
 import { fileURLToPath } from 'url'
-import pkg from '../dist/src/validator.js'
-const { validateContractList } = pkg
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function usage() {
   console.log('Usage: validate-contractlist <path-to-contractlist.json>')
@@ -15,21 +12,24 @@ function usage() {
 const file = process.argv[2]
 if (!file) usage()
 
-const p = path.resolve(process.cwd(), file)
-if (!fs.existsSync(p)) {
-  console.error('File not found:', p)
+const filePath = path.resolve(process.cwd(), file)
+if (!fs.existsSync(filePath)) {
+  console.error('File not found:', filePath)
   process.exit(2)
 }
 
-const raw = fs.readFileSync(p, 'utf8')
-let json
-try { json = JSON.parse(raw) } catch (e) { console.error('Invalid JSON:', e.message); process.exit(2) }
+const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const cliPath = path.join(pkgRoot, 'dist', 'cli.mjs')
 
-const res = validateContractList(json)
-if (!res.valid) {
-  console.error('Validation failed:')
-  console.error(res.errors)
-  process.exit(1)
+if (!fs.existsSync(cliPath)) {
+  console.error('wagmi-declare dist CLI not found:', cliPath)
+  console.error('Build the package first:')
+  console.error(`  (cd ${pkgRoot} && npm run build)`)
+  process.exit(2)
 }
-console.log('Validation OK')
-process.exit(0)
+
+const res = spawnSync(process.execPath, [cliPath, 'validate', '--file', filePath], {
+  stdio: 'inherit',
+})
+
+process.exit(res.status ?? 1)

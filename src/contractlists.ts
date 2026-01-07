@@ -205,7 +205,12 @@ export type ContractListFunctionEntry = {
     wizard?: WizardConfig;
     preview?: PreviewConfig;
     gasEstimation?: GasEstimationConfig;
-} & Record<Exclude<string, "simulate" | "resultStrategies" | "arguments" | "wizard" | "preview" | "gasEstimation">, string>;
+    // The function name is encoded as a dynamic key whose value is the display label.
+    // At runtime, each entry should contain exactly one such key.
+    // We intentionally keep this loose in TypeScript because excluding specific keys
+    // from an index signature is not expressible without breaking the metadata keys.
+    [key: string]: unknown;
+};
 
 export type ContractListFactory = {
     chainId: number;
@@ -242,13 +247,16 @@ export function getArgumentGroups(args: ContractListArgument[] | ArgumentGroup[]
 
 export function getFactoryFunctions(factory: ContractListFactory): { functionName: string; label: string; args: ContractListArgument[] }[] {
     return factory.functions.map(fn => {
-        const entries = Object.entries(fn).filter(([k]) => !['simulate', 'resultStrategies', 'arguments'].includes(k));
+        const entries = Object.entries(fn).filter(([k]) => !['simulate', 'resultStrategies', 'arguments', 'wizard', 'preview', 'gasEstimation'].includes(k));
         if (entries.length !== 1) {
             throw new Error(`Invalid function entry: Expected exactly one function name-label pair, got ${entries.length}`);
         }
         const [functionName, label] = entries[0];
+        if (typeof label !== 'string') {
+            throw new Error(`Invalid function entry: Expected label to be a string for ${functionName}`);
+        }
         const args = flattenArguments(fn.arguments);
-        return { functionName, label: label as string, args };
+        return { functionName, label, args };
     });
 }
 

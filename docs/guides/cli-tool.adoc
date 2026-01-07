@@ -16,7 +16,7 @@ npm install @daosys/wagmi-declare
 
 [source,bash]
 ----
-npx wagmi-declare generate \
+npx --package @daosys/wagmi-declare wagmi-declare generate \
   --abi ./MyContract.abi.json \
   --chain-id 1 \
   --name "My Contract"
@@ -77,7 +77,7 @@ This outputs the generated contract list JSON to stdout.
 
 [source,bash]
 ----
-npx wagmi-declare generate \
+npx --package @daosys/wagmi-declare wagmi-declare generate \
   --abi ./UniswapV2Router.abi.json \
   --chain-id 1 \
   --name "Uniswap V2 Router" \
@@ -90,7 +90,7 @@ If you're using wagmi React hooks, you can specify a custom hook name:
 
 [source,bash]
 ----
-npx wagmi-declare generate \
+npx --package @daosys/wagmi-declare wagmi-declare generate \
   --abi ./Router.abi.json \
   --chain-id 1 \
   --name "Uniswap V2 Router" \
@@ -107,19 +107,26 @@ By default, only write functions (nonpayable/payable) are included. To include v
 [source,bash]
 ----
 # Include view functions
-npx wagmi-declare generate \
+npx --package @daosys/wagmi-declare wagmi-declare generate \
   --abi ./Token.abi.json \
   --chain-id 1 \
   --name "ERC20 Token" \
   --include-view
 
 # Include both view and pure
-npx wagmi-declare generate \
+npx --package @daosys/wagmi-declare wagmi-declare generate \
   --abi ./Token.abi.json \
   --chain-id 1 \
   --name "ERC20 Token" \
   --include-view \
   --include-pure
+----
+
+== Validate a Contract List
+
+[source,bash]
+----
+npx --package @daosys/wagmi-declare wagmi-declare validate --file ./my.contractlist.json
 ----
 
 === Using npm Script

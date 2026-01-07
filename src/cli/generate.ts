@@ -146,10 +146,10 @@ function inferWidget(name: string, type: string): ContractListArgUI['widget'] {
     }
 
     // Array types
+    // Note: `select`/`multiselect` widgets require an option source (`source`/`options`).
+    // From ABI alone we usually cannot infer that safely, so default to manual text input.
     if (type.endsWith('[]')) {
-        if (type === 'address[]') {
-            return 'multiselect';
-        }
+        return 'text';
     }
 
     return 'text';
