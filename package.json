@@ -36,20 +36,25 @@
   "author": "indexedex",
   "license": "MIT",
   "peerDependencies": {
-    "wagmi": "^1.0.0",
-    "viem": "^1.0.0",
+    "wagmi": "^3.0.0",
+    "viem": "^2.0.0",
     "react": "^18.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "typescript": "^5.7.3",
     "tsup": "^8.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
     "vitest": "^1.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/jest-dom": "^6.0.0",
     "jsdom": "^22.0.0",
     "ajv": "^8.12.0",
-    "ajv-formats": "^2.1.1"
+    "ajv-formats": "^2.1.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "viem": "^2.0.0",
+    "wagmi": "^3.0.0"
   }
 }

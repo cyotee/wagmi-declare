@@ -6,10 +6,14 @@ import {
   isGroupedArguments,
   flattenArguments,
   getArgumentGroups,
+  resolveTargetAddress,
+  getTargetAddressField,
+  getTargetAddressConfig,
   type ContractListArgUI,
   type ContractListArgComponent,
   type ContractListArgument,
   type ContractListFunctionEntry,
+  type ContractListFactory,
   type DynamicDefault,
   type TokenAmountConfig,
   type DatetimeConfig,
@@ -21,7 +25,10 @@ import {
   type PreviewConfig,
   type GasEstimationConfig,
   type LayoutHints,
-  type I18nConfig
+  type I18nConfig,
+  type TargetAddressConfig,
+  type ResolveAddressOptions,
+  type Address
 } from '../src'
 import { validateContractList } from '../src/validator'
 
@@ -960,5 +967,238 @@ describe('schema validation for Phase 6 features', () => {
     }]
     const result = validateContractList(contractlist)
     expect(result.valid).toBe(true)
+  })
+})
+
+// v2: Unbound address support
+describe('ContractListFactory unbound address support', () => {
+  it('supports optional address field', () => {
+    const factory: ContractListFactory = {
+      name: 'Generic Vault',
+      supportedChains: [1, 8453],
+      functions: []
+    }
+    expect(factory.address).toBeUndefined()
+    expect(factory.supportedChains).toContain(8453)
+  })
+
+  it('supports targetAddressArg as string', () => {
+    const factory: ContractListFactory = {
+      name: 'Generic Vault',
+      targetAddressArg: 'vaultAddress',
+      functions: []
+    }
+    expect(factory.targetAddressArg).toBe('vaultAddress')
+  })
+
+  it('supports targetAddressArg as config object', () => {
+    const config: TargetAddressConfig = {
+      field: 'vaultAddress',
+      renderPhase: 'first',
+      validation: {
+        checkIsContract: true,
+        checkInterface: true,
+        interfaceId: '0x4e2312e0'
+      }
+    }
+    const factory: ContractListFactory = {
+      name: 'Generic Vault',
+      targetAddressArg: config,
+      functions: []
+    }
+    expect((factory.targetAddressArg as TargetAddressConfig).renderPhase).toBe('first')
+  })
+
+  it('maintains backward compatibility with hardcoded address', () => {
+    const factory: ContractListFactory = {
+      name: 'Specific Vault',
+      address: '0x1234567890123456789012345678901234567890' as Address,
+      chainId: 1,
+      functions: []
+    }
+    expect(factory.address).toBe('0x1234567890123456789012345678901234567890')
+    expect(factory.chainId).toBe(1)
+  })
+})
+
+// v2: Address Resolution Helpers
+describe('Address Resolution Helpers', () => {
+  const HARDCODED_ADDRESS = '0x1111111111111111111111111111111111111111' as Address
+  const FORM_ADDRESS = '0x2222222222222222222222222222222222222222' as Address
+  const OVERRIDE_ADDRESS = '0x3333333333333333333333333333333333333333' as Address
+
+  describe('getTargetAddressField', () => {
+    it('returns undefined when no targetAddressArg', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        address: HARDCODED_ADDRESS,
+        functions: []
+      }
+      expect(getTargetAddressField(factory)).toBeUndefined()
+    })
+
+    it('returns field name when targetAddressArg is string', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      expect(getTargetAddressField(factory)).toBe('vaultAddress')
+    })
+
+    it('returns field name when targetAddressArg is config object', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: {
+          field: 'contractAddress',
+          renderPhase: 'first'
+        },
+        functions: []
+      }
+      expect(getTargetAddressField(factory)).toBe('contractAddress')
+    })
+  })
+
+  describe('getTargetAddressConfig', () => {
+    it('returns undefined when no targetAddressArg', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        address: HARDCODED_ADDRESS,
+        functions: []
+      }
+      expect(getTargetAddressConfig(factory)).toBeUndefined()
+    })
+
+    it('returns normalized config when targetAddressArg is string', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      const config = getTargetAddressConfig(factory)
+      expect(config).toEqual({ field: 'vaultAddress' })
+    })
+
+    it('returns config object unchanged when already an object', () => {
+      const expectedConfig: TargetAddressConfig = {
+        field: 'contractAddress',
+        renderPhase: 'first',
+        validation: {
+          checkIsContract: true,
+          checkInterface: true,
+          interfaceId: '0x4e2312e0'
+        }
+      }
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: expectedConfig,
+        functions: []
+      }
+      expect(getTargetAddressConfig(factory)).toEqual(expectedConfig)
+    })
+  })
+
+  describe('resolveTargetAddress', () => {
+    it('returns undefined when no address source available', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        functions: []
+      }
+      expect(resolveTargetAddress(factory, {})).toBeUndefined()
+    })
+
+    it('returns hardcoded address when available', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        address: HARDCODED_ADDRESS,
+        functions: []
+      }
+      expect(resolveTargetAddress(factory, {})).toBe(HARDCODED_ADDRESS)
+    })
+
+    it('returns form field value when targetAddressArg is set', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      const options: ResolveAddressOptions = {
+        formValues: { vaultAddress: FORM_ADDRESS }
+      }
+      expect(resolveTargetAddress(factory, options)).toBe(FORM_ADDRESS)
+    })
+
+    it('returns form field value with config object targetAddressArg', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: {
+          field: 'contractAddress',
+          renderPhase: 'first'
+        },
+        functions: []
+      }
+      const options: ResolveAddressOptions = {
+        formValues: { contractAddress: FORM_ADDRESS }
+      }
+      expect(resolveTargetAddress(factory, options)).toBe(FORM_ADDRESS)
+    })
+
+    it('returns override address when provided (highest priority)', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        address: HARDCODED_ADDRESS,
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      const options: ResolveAddressOptions = {
+        address: OVERRIDE_ADDRESS,
+        formValues: { vaultAddress: FORM_ADDRESS }
+      }
+      expect(resolveTargetAddress(factory, options)).toBe(OVERRIDE_ADDRESS)
+    })
+
+    it('prioritizes: override > form field > hardcoded', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        address: HARDCODED_ADDRESS,
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+
+      // Only hardcoded
+      expect(resolveTargetAddress(factory, {})).toBe(HARDCODED_ADDRESS)
+
+      // Form field takes priority over hardcoded
+      expect(resolveTargetAddress(factory, {
+        formValues: { vaultAddress: FORM_ADDRESS }
+      })).toBe(FORM_ADDRESS)
+
+      // Override takes priority over all
+      expect(resolveTargetAddress(factory, {
+        address: OVERRIDE_ADDRESS,
+        formValues: { vaultAddress: FORM_ADDRESS }
+      })).toBe(OVERRIDE_ADDRESS)
+    })
+
+    it('returns undefined when form field not in formValues', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      const options: ResolveAddressOptions = {
+        formValues: { otherField: '0x1234' }
+      }
+      expect(resolveTargetAddress(factory, options)).toBeUndefined()
+    })
+
+    it('returns undefined when formValues is undefined but targetAddressArg is set', () => {
+      const factory: ContractListFactory = {
+        name: 'Test',
+        targetAddressArg: 'vaultAddress',
+        functions: []
+      }
+      expect(resolveTargetAddress(factory, {})).toBeUndefined()
+    })
   })
 })

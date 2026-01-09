@@ -212,11 +212,30 @@ export type ContractListFunctionEntry = {
     [key: string]: unknown;
 };
 
+// v2: Target address configuration for unbound lists
+export type TargetAddressConfig = {
+    field: string;
+    renderPhase?: 'first' | 'inline';
+    validation?: {
+        checkIsContract?: boolean;
+        checkInterface?: boolean;
+        interfaceId?: string;
+    };
+};
+
 export type ContractListFactory = {
-    chainId: number;
-    hookName: string;
+    // v2: Address binding (mutually exclusive, all optional)
+    address?: Address;
+    targetAddressArg?: string | TargetAddressConfig;
+
+    // v2: Chain validation
+    supportedChains?: number[];
+
+    // Existing fields (chainId now optional for backward compat)
+    chainId?: number;
+    hookName?: string;
     name: string;
-    functions: ContractListFunctionEntry[];
+    functions?: ContractListFunctionEntry[];
 };
 
 // Consumers should provide the concrete factories array (e.g., loaded from JSON).
@@ -246,6 +265,7 @@ export function getArgumentGroups(args: ContractListArgument[] | ArgumentGroup[]
 }
 
 export function getFactoryFunctions(factory: ContractListFactory): { functionName: string; label: string; args: ContractListArgument[] }[] {
+    if (!factory.functions) return [];
     return factory.functions.map(fn => {
         const entries = Object.entries(fn).filter(([k]) => !['simulate', 'resultStrategies', 'arguments', 'wizard', 'preview', 'gasEstimation'].includes(k));
         if (entries.length !== 1) {
@@ -301,5 +321,72 @@ export function buildOptionsFromUI(ui?: ContractListArgUI, tokenGetters?: TokenG
         return [];
     }
     return [];
+}
+
+// v2: Address Resolution Helpers
+
+/**
+ * Options for resolving the target address
+ */
+export type ResolveAddressOptions = {
+    /** Runtime override address (highest priority) */
+    address?: Address;
+    /** Form field values to read targetAddressArg from */
+    formValues?: Record<string, any>;
+};
+
+/**
+ * Get the field name for the target address argument
+ * @returns The field name string, or undefined if no targetAddressArg is configured
+ */
+export function getTargetAddressField(factory: ContractListFactory): string | undefined {
+    if (!factory.targetAddressArg) return undefined;
+    if (typeof factory.targetAddressArg === 'string') {
+        return factory.targetAddressArg;
+    }
+    return factory.targetAddressArg.field;
+}
+
+/**
+ * Get the full target address configuration
+ * @returns The TargetAddressConfig object (normalized from string if needed), or undefined
+ */
+export function getTargetAddressConfig(factory: ContractListFactory): TargetAddressConfig | undefined {
+    if (!factory.targetAddressArg) return undefined;
+    if (typeof factory.targetAddressArg === 'string') {
+        return { field: factory.targetAddressArg };
+    }
+    return factory.targetAddressArg;
+}
+
+/**
+ * Resolve the target contract address from available sources
+ * Priority order: override > form field > hardcoded
+ * @returns The resolved Address, or undefined if no source is available
+ */
+export function resolveTargetAddress(
+    factory: ContractListFactory,
+    options: ResolveAddressOptions
+): Address | undefined {
+    // 1. Highest priority: runtime override
+    if (options.address) {
+        return options.address;
+    }
+
+    // 2. Second priority: form field value (if targetAddressArg is configured)
+    const fieldName = getTargetAddressField(factory);
+    if (fieldName && options.formValues) {
+        const fieldValue = options.formValues[fieldName];
+        if (fieldValue) {
+            return fieldValue as Address;
+        }
+    }
+
+    // 3. Lowest priority: hardcoded address
+    if (factory.address) {
+        return factory.address;
+    }
+
+    return undefined;
 }
 

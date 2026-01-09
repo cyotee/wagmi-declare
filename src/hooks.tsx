@@ -22,7 +22,7 @@ export function useContractFunctionOptions(
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    if (!abiCall || !enabled) {
+    if (!abiCall || !enabled || !publicClient) {
       setOptions([])
       setLoading(false)
       setError(null)
@@ -31,6 +31,7 @@ export function useContractFunctionOptions(
 
     // Capture after guard so TypeScript knows it's defined inside run()
     const call = abiCall
+    const client = publicClient
 
     let mounted = true
     setLoading(true)
@@ -45,7 +46,7 @@ export function useContractFunctionOptions(
           return
         }
         const abi = call.inlineAbi ?? []
-        const data = await publicClient.readContract({ address: contract as Address, abi: abi as any, functionName: call.function, args: args as any[] })
+        const data = await client.readContract({ address: contract as Address, abi: abi as any, functionName: call.function, args: args as any[] })
         const out = Array.isArray(data) ? data.map(v => ({ value: v, label: String(v) })) : [{ value: data, label: String(data) }]
         if (mounted) setOptions(out)
       } catch (e: any) {
